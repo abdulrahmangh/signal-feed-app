@@ -238,4 +238,38 @@ function ChannelList({ onSelect }) {
         {CHANNELS.map((ch) => (
           <button key={ch.id} onClick={() => onSelect(ch)}
             className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors text-left">
-            <div className="w
+            <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-semibold"
+              style={{ background: ch.color + "1A", color: ch.color }}>
+              {ch.freq}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-[15px] font-medium text-white truncate block">{ch.name}</span>
+              <span className="text-[13px] text-[#8A93A0]">@{ch.handle}</span>
+            </div>
+            <IconChevron />
+          </button>
+        ))}
+      </div>
+      <div className="mx-3 mb-4 px-4 py-3 rounded-2xl" style={{ background: "#151A21" }}>
+        <p className="text-[12px] text-[#8A93A0] leading-relaxed">
+          Updates automatically every {POLL_INTERVAL_MS / 1000}s, or tap refresh in a feed to check now.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [active, setActive] = useState(null);
+  return (
+    <div className="w-full flex flex-col" style={{ height: "100dvh", background: "#0B0E11", overflow: "hidden" }}>
+      <style>{"@keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }"}</style>
+      {active ? <Feed channel={active} onBack={() => setActive(null)} /> : <ChannelList onSelect={setActive} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
