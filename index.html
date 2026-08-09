@@ -92,6 +92,14 @@ function IconEye() {
     h("circle", { cx: 12, cy: 12, r: 3 })
   );
 }
+  function IconChevron() {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#3A4048", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("polyline", { points: "9 18 15 12 9 6" })
+  );
+}
+
 function IconRain(props) {
   const on = props.on;
   return h(
