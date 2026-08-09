@@ -53,6 +53,15 @@ function timeAgo(iso) {
   if (hrs < 24) return hrs + "h";
   return Math.floor(hrs / 24) + "d";
 }
+function fontSizeForText(text) {
+  const len = text ? text.length : 0;
+  if (len > 600) return 14;
+  if (len > 450) return 16;
+  if (len > 320) return 18;
+  if (len > 200) return 21;
+  if (len > 120) return 24;
+  return 28;
+}
 
 async function fetchChannel(handle, params) {
   params = params || {};
@@ -172,7 +181,7 @@ function Slide(props) {
     "div",
     { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
       style: { scrollSnapAlign: "start", background: "radial-gradient(circle at 30% 20%, " + channel.color + "22, #0B0E11 60%)" } },
-    h("p", { className: "text-[26px] leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 360 } }, post.text),
+    h("p", { className: "leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 360, fontSize: fontSizeForText(post.text) + "px" } }, post.text),
     h(SlideChrome, { post: post, channel: channel })
   );
 }
