@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Signal Feed</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body, #root { height: 100%; margin: 0; background: #0B0E11; }
+  ::-webkit-scrollbar { display: none; }
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+  @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+</style>
+</head>
+<body>
+<div id="root">
+  <div style="color:#6B7480;font-family:monospace;font-size:13px;text-align:center;padding-top:50vh;">Loading…</div>
+</div>
+<script>
+window.onerror = function (msg, url, line, col) {
+  document.getElementById("root").innerHTML =
+    '<pre style="color:#fff;padding:20px;font-size:11px;white-space:pre-wrap;">Error: ' +
+    msg + "\nLine " + line + ":" + col + "</pre>";
+};
+</script>
+<script>
+const h = React.createElement;
+const { useState, useEffect, useRef, useCallback } = React;
+
+const API_BASE = "https://signal-feed-backend.vercel.app";
+const POLL_INTERVAL_MS = 30000;
+
+const CHANNELS = [
+  { id: "alsakrandrr", handle: "Alsakrandrr", name: "درر الشيخ السكران", freq: "1", color: "#4AF6C3" },
+];
+
+function isRtl(text) {
+  return !!text && /[\u0590-\u05FF\u0600-\u06FF]/.test(text);
+}
+
+function timeAgo(iso) {
+  if (!iso) return "";
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return mins + "m";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h";
+  return Math.floor(hrs / 24) + "d";
+}
+
+async function fetchChannel(handle, params) {
+  params = params || {};
+  const url = new URL(API_BASE + "/api/channel");
+  url.searchParams.set("name", handle);
+  Object.keys(params).forEach((k) => {
+    if (params[k] != null) url.searchParams.set(k, params[k]);
+  });
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("API error " + res.status);
+  return res.json();
+}
+
+function IconArrowLeft() {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("line", { x1: 19, y1: 12, x2: 5, y2: 12 }),
+    h("polyline", { points: "12 19 5 12 12 5" })
+  );
+}
+function IconRefresh({ spinning }) {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round",
+      style: spinning ? { animation: "spin 1s linear infinite" } : {} },
+    h("polyline", { points: "23 4 23 10 17 10" }),
+    h("polyline", { points: "1 20 1 14 7 14" }),
+    h("path", { d: "M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" })
+  );
+}
+function IconEye() {
+  return h(
+    "svg",
+    { width: 11, height: 11, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("path", { d: "M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8Z" }),
+    h("circle", { cx: 12, cy: 12, r: 3 })
+  );
+}
+function IconChevron() {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#3A4048", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("polyline", { points: "9 18 15 12 9 6" })
+  );
+}
+
+function SlideChrome(props) {
+  const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
+  const caption = post.caption;
+  return h(
+    React.Fragment,
+    null,
+    h(
+      "div",
+      { className: "absolute top-4 left-4 right-4 flex items-center gap-2" },
+      h(
+        "div",
+        { className: "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-[10px] font-semibold",
+          style: { background: channel.color + "33", color: channel.color } },
+        channel.freq
+      ),
+      h("span", { className: "text-[13px] font-medium text-white drop-shadow" }, channel.name)
+    ),
+    h(
+      "div",
+      { className: "absolute bottom-5 left-4 right-4" },
+      caption &&
+        h(
+          "p",
+          { className: "text-[20px] leading-snug font-medium mb-2 " + (light ? "text-white" : "text-[#E4E7EB]") + (rtlCaption ? " text-right" : ""),
+            dir: rtlCaption ? "rtl" : "ltr",
+            style: { textShadow: light ? "0 1px 8px rgba(0,0,0,0.7)" : "none" } },
+          caption
+        ),
+      h(
+        "div",
+        { className: "flex items-center gap-3 text-[11px] font-mono " + (light ? "text-white/70" : "text-[#6B7480]") },
+        post.views != null &&
+          h("span", { className: "flex items-center gap-1" }, h(IconEye), " " + post.views.toLocaleString()),
+        h("span", null, timeAgo(post.time) + " ago")
+      )
+    )
+  );
+}
+
+function Slide(props) {
+  const post = props.post, channel = props.channel;
+  const rtlText = isRtl(post.text);
+  const rtlCaption = isRtl(post.caption);
+
+  if (post.type === "photo" && post.imageUrl) {
+    return h(
+      "div",
+      { className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start" } },
+      h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover", draggable: false }),
+      h("div", { className: "absolute inset-0",
+        style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" } }),
+      h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
+    );
+  }
+
+  return h(
+    "div",
+    { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
+      style: { scrollSnapAlign: "start", background: "radial-gradient(circle at 30% 20%, " + channel.color + "22, #0B0E11 60%)" } },
+    h("p", { className: "text-[26px] leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 360 } }, post.text),
+    h(SlideChrome, { post: post, channel: channel })
+  );
+}
+
+function Feed(props) {
+  const channel = props.channel, onBack = props.onBack;
+  const [posts, setPosts] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [refreshing, setRefreshing] = useState(false);
+  const containerRef = useRef(null);
+  const loadingMoreRef = useRef(false);
+  const newestIdRef = useRef(null);
+  const oldestIdRef = useRef(null);
+
+  const loadInitial = useCallback(function () {
+    setStatus("loading");
+    fetchChannel(channel.handle)
+      .then(function (data) {
+        setPosts(data.posts);
+        newestIdRef.current = data.posts[0] ? data.posts[0].id : null;
+        oldestIdRef.current = data.oldestId;
+        setStatus("ready");
+      })
+      .catch(function () {
+        setStatus("error");
+      });
+  }, [channel]);
+
+  const checkForNew = useCallback(function (manual) {
+    if (manual) setRefreshing(true);
+    fetchChannel(channel.handle, { sinceId: newestIdRef.current })
+      .then(function (data) {
+        if (data.posts.length) {
+          setPosts(function (prev) { return data.posts.concat(prev); });
+          newestIdRef.current = data.posts[0].id;
+        }
+      })
+      .catch(function () {})
+      .finally(function () { if (manual) setRefreshing(false); });
+  }, [channel]);
+
+  const loadOlder = useCallback(function () {
+    if (loadingMoreRef.current || oldestIdRef.current == null) return;
+    loadingMoreRef.current = true;
+    fetchChannel(channel.handle, { before: oldestIdRef.current })
+      .then(function (data) {
+        if (data.posts.length) {
+          setPosts(function (prev) { return prev.concat(data.posts); });
+          oldestIdRef.current = data.oldestId;
+        } else {
+          oldestIdRef.current = null;
+        }
+      })
+      .catch(function () {})
+      .finally(function () { loadingMoreRef.current = false; });
+  }, [channel]);
+
+  useEffect(function () { loadInitial(); }, [loadInitial]);
+
+  useEffect(function () {
+    if (status !== "ready") return;
+    const interval = setInterval(function () { checkForNew(false); }, POLL_INTERVAL_MS);
+    return function () { clearInterval(interval); };
+  }, [status, checkForNew]);
+
+  const handleScroll = useCallback(function () {
+    const el = containerRef.current;
+    if (!el) return;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < el.clientHeight * 1.2) loadOlder();
+  }, [loadOlder]);
+
+  return h(
+    "div",
+    { className: "relative w-full h-full" },
+    h("button", { onClick: onBack, className: "absolute top-4 left-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconArrowLeft)),
+    h("button", { onClick: function () { checkForNew(true); }, className: "absolute top-4 right-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm" },
+      h(IconRefresh, { spinning: refreshing })),
+    status === "loading" &&
+      h("div", { className: "w-full h-full flex items-center justify-center", style: { background: "#0B0E11" } },
+        h("span", { className: "text-[13px] font-mono text-[#6B7480]" }, "Loading @" + channel.handle + "…")),
+    status === "error" &&
+      h("div", { className: "w-full h-full flex flex-col items-center justify-center gap-3 px-8", style: { background: "#0B0E11" } },
+        h("span", { className: "text-[13px] font-mono text-[#6B7480] text-center" }, "Couldn't reach the backend. Check the connection and try again."),
+        h("button", { onClick: loadInitial, className: "text-[12px] px-3 py-1.5 rounded-full", style: { background: "#151A21", color: "#4AF6C3" } }, "Retry")),
+    status === "ready" &&
+      h("div", { ref: containerRef, onScroll: handleScroll, className: "w-full h-full overflow-y-scroll", style: { scrollSnapType: "y mandatory" } },
+        posts.map(function (p) { return h(Slide, { key: p.id, post: p, channel: channel }); }))
+  );
+}
+
+function ChannelList(props) {
+  const onSelect = props.onSelect;
+  return h(
+    "div",
+    { className: "flex flex-col h-full", style: { background: "#0B0E11" } },
+    h(
+      "div",
+      { className: "px-5 pt-6 pb-4" },
+      h("div", { className: "flex items-center gap-2 text-[#4AF6C3] mb-1" },
+        h("span", { className: "text-[11px] font-mono tracking-widest uppercase" }, "Tuned In")),
+      h("h1", { className: "text-2xl font-semibold text-white tracking-tight" }, "Your channels"),
+      h("p", { className: "text-sm text-[#6B7480] mt-1" }, "Live from Telegram, one post at a time.")
+    ),
+    h(
+      "div",
+      { className: "flex-1 overflow-y-auto px-3 pb-4 space-y-1.5" },
+      CHANNELS.map(function (ch) {
+        return h(
+          "button",
+          { key: ch.id, onClick: function () { onSelect(ch); },
+            className: "w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/[0.04] active:bg-white/[0.06] transition-colors text-left" },
+          h("div", { className: "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-semibold",
+            style: { background: ch.color + "1A", color: ch.color } }, ch.freq),
+          h("div", { className: "min-w-0 flex-1" },
+            h("span", { className: "text-[15px] font-medium text-white truncate block" }, ch.name),
+            h("span", { className: "text-[13px] text-[#8A93A0]" }, "@" + ch.handle)),
+          h(IconChevron)
+        );
+      })
+    ),
+    h(
+      "div",
+      { className: "mx-3 mb-4 px-4 py-3 rounded-2xl", style: { background: "#151A21" } },
+      h("p", { className: "text-[12px] text-[#8A93A0] leading-relaxed" },
+        "Updates automatically every " + (POLL_INTERVAL_MS / 1000) + "s, or tap refresh in a feed to check now.")
+    )
+  );
+}
+
+function App() {
+  const [active, setActive] = useState(null);
+  return h(
+    "div",
+    { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden" } },
+    active ? h(Feed, { channel: active, onBack: function () { setActive(null); } }) : h(ChannelList, { onSelect: setActive })
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+</script>
+</body>
+</html>
