@@ -92,13 +92,18 @@ function IconEye() {
     h("circle", { cx: 12, cy: 12, r: 3 })
   );
 }
-function IconChevron() {
+function IconRain(props) {
+  const on = props.on;
   return h(
     "svg",
-    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#3A4048", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-    h("polyline", { points: "9 18 15 12 9 6" })
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: on ? "#4AF6C3" : "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("path", { d: "M8 13a5 5 0 0 1 10 0" }),
+    h("line", { x1: 8, y1: 19, x2: 8, y2: 21 }),
+    h("line", { x1: 12, y1: 19, x2: 12, y2: 22 }),
+    h("line", { x1: 16, y1: 19, x2: 16, y2: 21 })
   );
 }
+
 
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
@@ -291,12 +296,50 @@ function ChannelList(props) {
 
 function App() {
   const [active, setActive] = useState(null);
+  const [rainOn, setRainOn] = useState(false);
+  const rainRef = useRef(null);
+
+  const toggleRain = useCallback(function () {
+    if (!rainRef.current) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const bufferSize = 2 * ctx.sampleRate;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+      noise.loop = true;
+      const highpass = ctx.createBiquadFilter();
+      highpass.type = "highpass";
+      highpass.frequency.value = 400;
+      const bandpass = ctx.createBiquadFilter();
+      bandpass.type = "bandpass";
+      bandpass.frequency.value = 1000;
+      bandpass.Q.value = 0.6;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      noise.connect(highpass);
+      highpass.connect(bandpass);
+      bandpass.connect(gain);
+      gain.connect(ctx.destination);
+      noise.start();
+      rainRef.current = { ctx: ctx, gain: gain };
+    }
+    const r = rainRef.current;
+    if (r.ctx.state === "suspended") r.ctx.resume();
+    const target = rainOn ? 0 : 0.12;
+    r.gain.gain.linearRampToValueAtTime(target, r.ctx.currentTime + 0.8);
+    setRainOn(!rainOn);
+  }, [rainOn]);
+
   return h(
     "div",
-    { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden" } },
+    { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden", position: "relative" } },
+    h("button", { onClick: toggleRain, className: "absolute top-4 right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconRain, { on: rainOn })),
     active ? h(Feed, { channel: active, onBack: function () { setActive(null); } }) : h(ChannelList, { onSelect: setActive })
   );
 }
+
 
 ReactDOM.createRoot(document.getElementById("root")).render(h(App));
 </script>
