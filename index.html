@@ -369,20 +369,20 @@ function ChannelList(props) {
       )
     ),
 
-    h("div", { className: "relative flex-1 overflow-y-auto px-3 pb-4 space-y-2" },
+        h("div", { className: "relative flex-1 overflow-y-auto px-4 pb-4 space-y-4" },
       CHANNELS.map(function (ch) {
         return h("button", { key: ch.id, onClick: function () { onSelect(ch); },
-          className: "w-full flex items-center gap-3 px-3 py-3 rounded-2xl backdrop-blur-md active:opacity-80 transition-opacity text-left",
-          style: { background: "rgba(0,0,0,0.35)" } },
-          h("div", { className: "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-semibold",
+          className: "inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full backdrop-blur-sm active:opacity-80 transition-opacity text-left",
+          style: { background: "rgba(0,0,0,0.4)" } },
+          h("div", { className: "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-semibold",
             style: { background: ch.color + "33", color: ch.color } }, ch.freq),
-          h("div", { className: "min-w-0 flex-1" },
-            h("span", { className: "text-[15px] font-medium text-white truncate block" }, ch.name),
-            h("span", { className: "text-[13px] text-white/70" }, "@" + (ch.handle || "null"))),
-          h(IconChevron)
+          h("div", { className: "min-w-0" },
+            h("span", { className: "text-[15px] font-medium text-white truncate block", style: { textShadow: "0 1px 4px rgba(0,0,0,0.8)" } }, ch.name),
+            h("span", { className: "text-[12px] text-white/60" }, "@" + (ch.handle || "null")))
         );
-      })
+      }).map(function (btn) { return h("div", { key: btn.key }, btn); })
     ),
+
 
     h("div", { className: "relative mx-3 mb-4 px-4 py-3 rounded-2xl backdrop-blur-md", style: { background: "rgba(0,0,0,0.35)" } },
       h("p", { className: "text-[12px] text-white/70 leading-relaxed" },
