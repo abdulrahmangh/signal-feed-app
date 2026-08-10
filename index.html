@@ -167,7 +167,17 @@ function Slide(props) {
   const rtlCaption = isRtl(post.caption);
 
   if (post.type === "photo" && post.imageUrl) {
-      const bgSeed = post.id + "-" + Math.floor(Math.random() * 100000);
+    return h(
+      "div",
+      { className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start" } },
+      h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-contain", draggable: false }),
+      h("div", { className: "absolute inset-0",
+        style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" } }),
+      h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
+    );
+  }
+
+  const bgSeed = post.id + "-" + Math.floor(Math.random() * 100000);
   return h(
     "div",
     { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
@@ -177,9 +187,10 @@ function Slide(props) {
     h("div", { className: "relative backdrop-blur-md rounded-3xl px-6 py-8", style: { background: "rgba(0,0,0,0.28)" } },
       h("p", { className: "leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 320, fontSize: fontSizeForText(post.text) + "px" } }, post.text)
     ),
-    h(SlideChrome, { post: post, channel: channel })
+    h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
   );
 }
+
 
   return h(
     "div",
