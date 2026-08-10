@@ -36,6 +36,7 @@ const CHANNELS = [
   { id: "alsakrandrr", handle: "Alsakrandrr", name: "درر الشيخ السكران", freq: "1", color: "#4AF6C3" },
   { id: "iilllii7", handle: "iilllii7", name: "فوائد ابن القيم", freq: "2", color: "#FFB86B" },
   { id: "ebn_taimia1", handle: "ebn_taimia1", name: "فوائد ابن تيمية", freq: "3", color: "#8AB4FF" },
+  { id: "mix", handle: null, name: "خليط", freq: "★", color: "#FF6EC7", mix: true },
 ];
 
 
@@ -200,35 +201,65 @@ function Slide(props) {
 
 function Feed(props) {
   const channel = props.channel, onBack = props.onBack;
+  const sources = channel.mix ? CHANNELS.filter(function (c) { return !c.mix; }) : [channel];
   const [posts, setPosts] = useState([]);
   const [status, setStatus] = useState("loading");
   const [refreshing, setRefreshing] = useState(false);
   const containerRef = useRef(null);
   const loadingMoreRef = useRef(false);
-  const newestIdRef = useRef(null);
-  const oldestIdRef = useRef(null);
+  const newestIdRef = useRef({});
+  const oldestIdRef = useRef({});
+
+  function tagPosts(list, src) {
+    return list.map(function (p) { return Object.assign({}, p, { __src: src, __key: src.handle + "-" + p.id }); });
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
 
   const loadInitial = useCallback(function () {
     setStatus("loading");
-    fetchChannel(channel.handle)
-      .then(function (data) {
-        setPosts(data.posts);
-        newestIdRef.current = data.posts[0] ? data.posts[0].id : null;
-        oldestIdRef.current = data.oldestId;
+    Promise.all(sources.map(function (src) { return fetchChannel(src.handle); }))
+      .then(function (results) {
+        let merged = [];
+        results.forEach(function (data, i) {
+          const src = sources[i];
+          const tagged = tagPosts(data.posts, src);
+          merged = merged.concat(tagged);
+          newestIdRef.current[src.handle] = tagged[0] ? tagged[0].id : null;
+          oldestIdRef.current[src.handle] = data.oldestId;
+        });
+        merged = channel.mix ? shuffle(merged) : merged.sort(function (a, b) { return b.id - a.id; });
+        setPosts(merged);
         setStatus("ready");
       })
-      .catch(function () {
-        setStatus("error");
-      });
+      .catch(function () { setStatus("error"); });
   }, [channel]);
 
   const checkForNew = useCallback(function (manual) {
     if (manual) setRefreshing(true);
-    fetchChannel(channel.handle, { sinceId: newestIdRef.current })
-      .then(function (data) {
-        if (data.posts.length) {
-          setPosts(function (prev) { return data.posts.concat(prev); });
-          newestIdRef.current = data.posts[0].id;
+    Promise.all(sources.map(function (src) {
+      return fetchChannel(src.handle, { sinceId: newestIdRef.current[src.handle] });
+    }))
+      .then(function (results) {
+        let fresh = [];
+        results.forEach(function (data, i) {
+          const src = sources[i];
+          if (data.posts.length) {
+            const tagged = tagPosts(data.posts, src);
+            fresh = fresh.concat(tagged);
+            newestIdRef.current[src.handle] = tagged[0].id;
+          }
+        });
+        if (fresh.length) {
+          fresh = channel.mix ? shuffle(fresh) : fresh;
+          setPosts(function (prev) { return fresh.concat(prev); });
         }
       })
       .catch(function () {})
@@ -236,16 +267,26 @@ function Feed(props) {
   }, [channel]);
 
   const loadOlder = useCallback(function () {
-    if (loadingMoreRef.current || oldestIdRef.current == null) return;
+    if (loadingMoreRef.current) return;
     loadingMoreRef.current = true;
-    fetchChannel(channel.handle, { before: oldestIdRef.current })
-      .then(function (data) {
-        if (data.posts.length) {
-          setPosts(function (prev) { return prev.concat(data.posts); });
-          oldestIdRef.current = data.oldestId;
-        } else {
-          oldestIdRef.current = null;
-        }
+    Promise.all(sources.map(function (src) {
+      const before = oldestIdRef.current[src.handle];
+      if (before == null) return Promise.resolve({ posts: [], oldestId: null });
+      return fetchChannel(src.handle, { before: before });
+    }))
+      .then(function (results) {
+        let older = [];
+        results.forEach(function (data, i) {
+          const src = sources[i];
+          if (data.posts.length) {
+            older = older.concat(tagPosts(data.posts, src));
+            oldestIdRef.current[src.handle] = data.oldestId;
+          } else {
+            oldestIdRef.current[src.handle] = null;
+          }
+        });
+        older = channel.mix ? shuffle(older) : older;
+        setPosts(function (prev) { return prev.concat(older); });
       })
       .catch(function () {})
       .finally(function () { loadingMoreRef.current = false; });
@@ -273,16 +314,17 @@ function Feed(props) {
       h(IconRefresh, { spinning: refreshing })),
     status === "loading" &&
       h("div", { className: "w-full h-full flex items-center justify-center", style: { background: "#0B0E11" } },
-        h("span", { className: "text-[13px] font-mono text-[#6B7480]" }, "Loading @" + channel.handle + "…")),
+        h("span", { className: "text-[13px] font-mono text-[#6B7480]" }, "Loading…")),
     status === "error" &&
       h("div", { className: "w-full h-full flex flex-col items-center justify-center gap-3 px-8", style: { background: "#0B0E11" } },
         h("span", { className: "text-[13px] font-mono text-[#6B7480] text-center" }, "Couldn't reach the backend. Check the connection and try again."),
         h("button", { onClick: loadInitial, className: "text-[12px] px-3 py-1.5 rounded-full", style: { background: "#151A21", color: "#4AF6C3" } }, "Retry")),
     status === "ready" &&
       h("div", { ref: containerRef, onScroll: handleScroll, className: "w-full h-full overflow-y-scroll", style: { scrollSnapType: "y mandatory" } },
-        posts.map(function (p) { return h(Slide, { key: p.id, post: p, channel: channel }); }))
+        posts.map(function (p) { return h(Slide, { key: p.__key || p.id, post: p, channel: p.__src || channel }); }))
   );
 }
+
 
 function ChannelList(props) {
   const onSelect = props.onSelect;
