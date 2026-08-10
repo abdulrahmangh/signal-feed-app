@@ -333,6 +333,7 @@ function Feed(props) {
 function ChannelList(props) {
   const onSelect = props.onSelect;
   const [videoUrl, setVideoUrl] = useState(null);
+  const videoRef = useRef(null);
 
   useEffect(function () {
     fetch(API_BASE + "/api/nature-video")
@@ -341,13 +342,22 @@ function ChannelList(props) {
       .catch(function () {});
   }, []);
 
+  useEffect(function () {
+    const v = videoRef.current;
+    if (!v || !videoUrl) return;
+    v.muted = true;
+    v.play().catch(function () {});
+  }, [videoUrl]);
+
+
   return h(
     "div",
     { className: "relative flex flex-col h-full overflow-hidden", style: { background: "#0B0E11" } },
     videoUrl && h("video", {
-      src: videoUrl, autoPlay: true, muted: true, loop: true, playsInline: true,
+      ref: videoRef, src: videoUrl, autoPlay: true, muted: true, loop: true, playsInline: true,
       className: "absolute inset-0 w-full h-full object-cover",
     }),
+
     h("div", { className: "absolute inset-0", style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.75) 100%)" } }),
 
     h("div", { className: "relative px-5 pt-6 pb-4" },
