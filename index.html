@@ -236,7 +236,7 @@ function Feed(props) {
           newestIdRef.current[src.handle] = tagged[0] ? tagged[0].id : null;
           oldestIdRef.current[src.handle] = data.oldestId;
         });
-        merged = channel.mix ? shuffle(merged) : merged.sort(function (a, b) { return b.id - a.id; });
+        merged = shuffle(merged);
         setPosts(merged);
         setStatus("ready");
       })
@@ -259,7 +259,7 @@ function Feed(props) {
           }
         });
         if (fresh.length) {
-          fresh = channel.mix ? shuffle(fresh) : fresh;
+          fresh = shuffle(fresh);
           setPosts(function (prev) { return fresh.concat(prev); });
         }
       })
@@ -286,7 +286,7 @@ function Feed(props) {
             oldestIdRef.current[src.handle] = null;
           }
         });
-        older = channel.mix ? shuffle(older) : older;
+        older = shuffle(older);
         setPosts(function (prev) { return prev.concat(older); });
       })
       .catch(function () {})
