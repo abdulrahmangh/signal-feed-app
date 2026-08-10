@@ -50,6 +50,15 @@ const CHANNELS = [
 
 ];
 
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
 
 
 function isRtl(text) {
@@ -340,7 +349,13 @@ function Feed(props) {
 function ChannelList(props) {
   const onSelect = props.onSelect;
   const [videoUrl, setVideoUrl] = useState(null);
+  const [shuffledChannels] = useState(function () {
+    const first = CHANNELS[0];
+    const rest = shuffleArray(CHANNELS.slice(1));
+    return [first].concat(rest);
+  });
   const videoRef = useRef(null);
+
 
   useEffect(function () {
     fetch(API_BASE + "/api/nature-video")
@@ -377,7 +392,7 @@ function ChannelList(props) {
     ),
 
         h("div", { className: "relative flex-1 overflow-y-auto px-4 pb-4 space-y-4" },
-      CHANNELS.map(function (ch) {
+      shuffledChannels.map(function (ch) {
         return h("button", { key: ch.id, onClick: function () { onSelect(ch); },
           className: "inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full backdrop-blur-sm active:opacity-80 transition-opacity text-left",
           style: { background: "rgba(0,0,0,0.4)" } },
