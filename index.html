@@ -191,16 +191,6 @@ function Slide(props) {
   );
 }
 
-
-  return h(
-    "div",
-    { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
-      style: { scrollSnapAlign: "start", background: "radial-gradient(circle at 30% 20%, " + channel.color + "22, #0B0E11 60%)" } },
-    h("p", { className: "leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 360, fontSize: fontSizeForText(post.text) + "px" } }, post.text),
-    h(SlideChrome, { post: post, channel: channel })
-  );
-}
-
 function Feed(props) {
   const channel = props.channel, onBack = props.onBack;
   const [posts, setPosts] = useState([]);
