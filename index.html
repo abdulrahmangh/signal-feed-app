@@ -12,6 +12,12 @@
   ::-webkit-scrollbar { display: none; }
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
   @keyframes spin { from { transform: rotate(0deg);} to { transform: rotate(360deg);} }
+  @keyframes kenburns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.15) translate(-2%, -2%); }
+}
+.kenburns-img { animation: kenburns 20s ease-in-out infinite alternate; will-change: transform; }
+
 </style>
 </head>
 <body>
@@ -176,7 +182,7 @@ function Slide(props) {
     return h(
       "div",
       { className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start" } },
-      h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-contain", draggable: false }),
+      h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-contain kenburns-img", draggable: false }),
       h("div", { className: "absolute inset-0",
         style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" } }),
       h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
@@ -195,7 +201,7 @@ function Slide(props) {
     "div",
     { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
       style: { scrollSnapAlign: "start", background: "#0B0E11" } },
-    bgUrl && h("img", { src: bgUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover", draggable: false }),
+    bgUrl && h("img", { src: bgUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover kenburns-img", draggable: false }),
     h("div", { className: "absolute inset-0", style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.65) 100%)" } }),
     h("div", { className: "relative backdrop-blur-md rounded-3xl px-6 py-8", style: { background: "rgba(0,0,0,0.28)" } },
       h("p", { className: "leading-snug font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 320, fontSize: fontSizeForText(post.text) + "px" } }, post.text)
