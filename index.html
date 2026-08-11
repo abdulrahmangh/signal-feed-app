@@ -459,7 +459,7 @@ function App() {
   return h(
     "div",
     { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden", position: "relative" } },
-    h("button", { onClick: toggleRain, className: "absolute top-4 right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconRain, { on: rainOn })),
+    h("button", { onClick: toggleRain, className: "absolute top-4 right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: rainOn ? 1 : 0.6 } }, "🌧️"),
     active ? h(Feed, { channel: active, onBack: function () { setActive(null); } }) : h(ChannelList, { onSelect: setActive })
   );
 }
