@@ -49,12 +49,12 @@ const POLL_INTERVAL_MS = 30000;
 
 const CHANNELS = [
   { id: "mix", handle: null, name: "مفضلتك ", freq: "💡", color: "#FF6EC7", mix: true },
+  { id: "muslim_tok_s", handle: "muslim_tok_s", name: "اذكار اليوم والليلة", freq: "🌅", color: "#FFD966", ordered: true },
   { id: "iilllii7", handle: "iilllii7", name: "فوائد ابن القيم", freq: "📜", color: "#FFB86B" },
   { id: "ebn_taimia1", handle: "ebn_taimia1", name: "فوائد ابن تيمية", freq: "📖", color: "#8AB4FF" },
   { id: "sahehlbokhari", handle: "sahehlbokhari", name: "صحيح البخاري ومسلم", freq: "🪶", color: "#B08CFF" },
   { id: "heeekma1", handle: "heeekma1", name: "آية وحكمة", freq: "🌿", color: "#9CFF6E" },
   { id: "p2ttp", handle: "P2TTP", name: "آيَاتٍ بَيِّنَاتٍ", freq: "🌳", color: "#6EB4FF" },
-  { id: "muslim_tok_s", handle: "muslim_tok_s", name: "اذكار اليوم والليلة", freq: "🌅", color: "#FFD966", ordered: true },
   { id: "athar_sahaba", handle: "athar_sahaba", name: "صحيح آثار الصحابة", freq: "🕊️", color: "#E07856" },
   { id: "hassanalbasri1", handle: "HassanAlBasri1", name: "فوائد الحسن البصري", freq: "🌙", color: "#7EC8E3" },
   { id: "abdullahbinabbas1", handle: "AbdullahbinAbbas1", name: "فوائد عبدالله بن عباس", freq: "🌾", color: "#C8A97E" },
@@ -447,11 +447,13 @@ function Feed(props) {
 function ChannelList(props) {
   const onSelect = props.onSelect;
   const [videoUrl, setVideoUrl] = useState(null);
-  const [shuffledChannels] = useState(function () {
+    const [shuffledChannels] = useState(function () {
     const first = CHANNELS[0];
-    const rest = shuffleArray(CHANNELS.slice(1));
-    return [first].concat(rest);
+    const second = CHANNELS.filter(function (c) { return c.id === "muslim_tok_s"; })[0];
+    const rest = shuffleArray(CHANNELS.filter(function (c) { return c.id !== "mix" && c.id !== "muslim_tok_s"; }));
+    return [first, second].concat(rest);
   });
+
     const videoRef = useRef(null);
   const [showPicker, setShowPicker] = useState(false);
   const [customIds, setCustomIds] = useState(function () {
