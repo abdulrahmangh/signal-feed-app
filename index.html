@@ -62,6 +62,25 @@ function shuffleArray(arr) {
   return a;
 }
 
+  function fetchChannelDeep(handle, depth) {
+    return fetchChannel(handle).then(function (first) {
+      let allPosts = first.posts.slice();
+      let oldest = first.oldestId;
+      let chain = Promise.resolve();
+      for (let i = 1; i < depth; i++) {
+        chain = chain.then(function () {
+          if (oldest == null) return;
+          return fetchChannel(handle, { before: oldest }).then(function (data) {
+            allPosts = allPosts.concat(data.posts);
+            oldest = data.oldestId;
+          });
+        });
+      }
+      return chain.then(function () {
+        return { posts: allPosts, oldestId: oldest };
+      });
+    });
+  }
 
 
 function isRtl(text) {
@@ -248,7 +267,8 @@ function Feed(props) {
 
   const loadInitial = useCallback(function () {
     setStatus("loading");
-    Promise.all(sources.map(function (src) { return fetchChannel(src.handle); }))
+    Promise.all(sources.map(function (src) { return fetchChannelDeep(src.handle, 6); }))
+
       .then(function (results) {
         let merged = [];
         results.forEach(function (data, i) {
