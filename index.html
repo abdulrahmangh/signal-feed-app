@@ -535,61 +535,52 @@ function App() {
   const wavesRef = useRef(null);
   const fireRef = useRef(null);
 
+    function toggleLoopSound(ref, url, on, setOn) {
+    if (!ref.current) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      gain.connect(ctx.destination);
+      const state = { ctx: ctx, gain: gain, ready: false, wantsOn: false };
+      ref.current = state;
+      fetch(url)
+        .then(function (r) { return r.arrayBuffer(); })
+        .then(function (buf) { return ctx.decodeAudioData(buf); })
+        .then(function (audioBuffer) {
+          const source = ctx.createBufferSource();
+          source.buffer = audioBuffer;
+          source.loop = true;
+          source.connect(gain);
+          source.start();
+          state.ready = true;
+          if (state.wantsOn) {
+            gain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 0.8);
+          }
+        });
+    }
+    const state = ref.current;
+    if (state.ctx.state === "suspended") state.ctx.resume();
+    const target = on ? 0 : 0.6;
+    state.wantsOn = !on;
+    if (state.ready) {
+      state.gain.gain.cancelScheduledValues(state.ctx.currentTime);
+      state.gain.gain.linearRampToValueAtTime(target, state.ctx.currentTime + 0.8);
+    }
+    setOn(!on);
+  }
+
   const toggleFire = useCallback(function () {
-    if (!fireRef.current) {
-      const audio = new Audio("/fire.m4a");
-      audio.loop = true;
-      audio.volume = 0;
-      fireRef.current = audio;
-    }
-    const audio = fireRef.current;
-    if (fireOn) {
-      audio.pause();
-    } else {
-      audio.currentTime = 0;
-      audio.play().catch(function () {});
-      audio.volume = 0.6;
-    }
-    setFireOn(!fireOn);
+    toggleLoopSound(fireRef, "/fire.m4a", fireOn, setFireOn);
   }, [fireOn]);
 
   const toggleWaves = useCallback(function () {
-
-    if (!wavesRef.current) {
-      const audio = new Audio("/waves.m4a");
-      audio.loop = true;
-      audio.volume = 0;
-      wavesRef.current = audio;
-    }
-    const audio = wavesRef.current;
-    if (wavesOn) {
-      audio.pause();
-    } else {
-      audio.currentTime = 0;
-      audio.play().catch(function () {});
-      audio.volume = 0.6;
-    }
-    setWavesOn(!wavesOn);
+    toggleLoopSound(wavesRef, "/waves.m4a", wavesOn, setWavesOn);
   }, [wavesOn]);
 
-    const toggleRain = useCallback(function () {
-
-    if (!rainRef.current) {
-      const audio = new Audio("/Rain.m4a");
-      audio.loop = true;
-      audio.volume = 0;
-      rainRef.current = audio;
-    }
-    const audio = rainRef.current;
-    if (rainOn) {
-      audio.pause();
-    } else {
-      audio.currentTime = 0;
-      audio.play().catch(function () {});
-      audio.volume = 0.6;
-    }
-    setRainOn(!rainOn);
+  const toggleRain = useCallback(function () {
+    toggleLoopSound(rainRef, "/Rain.m4a", rainOn, setRainOn);
   }, [rainOn]);
+
 
 
   return h(
