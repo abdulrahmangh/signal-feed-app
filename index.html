@@ -421,9 +421,30 @@ function ChannelList(props) {
 function App() {
   const [active, setActive] = useState(null);
   const [rainOn, setRainOn] = useState(false);
+  const [wavesOn, setWavesOn] = useState(false);
   const rainRef = useRef(null);
+  const wavesRef = useRef(null);
+
+  const toggleWaves = useCallback(function () {
+    if (!wavesRef.current) {
+      const audio = new Audio("/waves.m4a");
+      audio.loop = true;
+      audio.volume = 0;
+      wavesRef.current = audio;
+    }
+    const audio = wavesRef.current;
+    if (wavesOn) {
+      audio.pause();
+    } else {
+      audio.currentTime = 0;
+      audio.play().catch(function () {});
+      audio.volume = 0.6;
+    }
+    setWavesOn(!wavesOn);
+  }, [wavesOn]);
 
     const toggleRain = useCallback(function () {
+
     if (!rainRef.current) {
       const audio = new Audio("/Rain.m4a");
       audio.loop = true;
@@ -446,6 +467,7 @@ function App() {
     "div",
     { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden", position: "relative" } },
     h("button", { onClick: toggleRain, className: "absolute top-4 right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: rainOn ? 1 : 0.6 } }, "🌧️"),
+    h("button", { onClick: toggleWaves, className: "absolute top-16 right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: wavesOn ? 1 : 0.6 } }, "🌊"),
     active ? h(Feed, { channel: active, onBack: function () { setActive(null); } }) : h(ChannelList, { onSelect: setActive })
   );
 }
