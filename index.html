@@ -492,8 +492,8 @@ function ChannelList(props) {
         h("div", { className: "relative flex-1 overflow-y-auto px-4 pb-4 space-y-4" },
       shuffledChannels.map(function (ch) {
                return h("div", { key: ch.id, className: "flex items-center gap-2" },
-          h("button", { onClick: function () { handleSelect(ch); },
-            className: "flex-1 inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full backdrop-blur-sm active:opacity-80 transition-opacity text-left",
+                    h("button", { onClick: function () { handleSelect(ch); },
+            className: "inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full backdrop-blur-sm active:opacity-80 transition-opacity text-left",
             style: { background: "rgba(0,0,0,0.4)" } },
             h("div", { className: "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs font-semibold",
               style: { background: ch.color + "33", color: ch.color } }, ch.freq),
