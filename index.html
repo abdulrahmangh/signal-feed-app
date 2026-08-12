@@ -292,9 +292,12 @@ function Feed(props) {
           newestIdRef.current[src.handle] = tagged[0] ? tagged[0].id : null;
           oldestIdRef.current[src.handle] = data.oldestId;
         });
-        merged = shuffle(merged);
+                merged = (sources.length === 1 && sources[0].ordered)
+          ? merged.slice().sort(function (a, b) { return a.id - b.id; })
+          : shuffle(merged);
         setPosts(merged);
         setStatus("ready");
+
       })
       .catch(function () { setStatus("error"); });
   }, [channel]);
