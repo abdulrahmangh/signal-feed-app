@@ -43,7 +43,7 @@ const API_BASE = "https://signal-feed-backend.vercel.app";
 const POLL_INTERVAL_MS = 30000;
 
 const CHANNELS = [
-  { id: "mix", handle: null, name: "مزيجك الخاص ", freq: "💡", color: "#FF6EC7", mix: true },
+  { id: "mix", handle: null, name: "مفضلتك ", freq: "💡", color: "#FF6EC7", mix: true },
   { id: "iilllii7", handle: "iilllii7", name: "فوائد ابن القيم", freq: "📜", color: "#FFB86B" },
   { id: "ebn_taimia1", handle: "ebn_taimia1", name: "فوائد ابن تيمية", freq: "📖", color: "#8AB4FF" },
   { id: "sahehlbokhari", handle: "sahehlbokhari", name: "صحيح البخاري ومسلم", freq: "🪶", color: "#B08CFF" },
@@ -503,7 +503,7 @@ function ChannelList(props) {
               h("span", { className: "text-[15px] font-medium text-white truncate block", style: { textShadow: "0 1px 4px rgba(0,0,0,0.8)" } }, ch.name),
               h("span", { className: "text-[12px] text-white/60" }, "@" + (ch.handle || "null")))
           ),
-                    ch.mix && h("button", { onClick: function () { setShowPicker(true); }, className: "p-2 rounded-full text-white/70 flex-shrink-0 pulse-gear", style: { background: "rgba(0,0,0,0.4)" } }, "⬅️اصنع مزيجك🔀")
+                    ch.mix && h("button", { onClick: function () { setShowPicker(true); }, className: "p-2 rounded-full text-white/70 flex-shrink-0 pulse-gear", style: { background: "rgba(0,0,0,0.4)" } }, "🔘اصنع مفضلتك هنا🔀")
         );
       })
     ),
