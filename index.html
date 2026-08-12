@@ -423,38 +423,24 @@ function App() {
   const [rainOn, setRainOn] = useState(false);
   const rainRef = useRef(null);
 
-  const toggleRain = useCallback(function () {
+    const toggleRain = useCallback(function () {
     if (!rainRef.current) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const bufferSize = 2 * ctx.sampleRate;
-      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-      const noise = ctx.createBufferSource();
-      noise.buffer = buffer;
-      noise.loop = true;
-      const highpass = ctx.createBiquadFilter();
-      highpass.type = "highpass";
-      highpass.frequency.value = 400;
-      const bandpass = ctx.createBiquadFilter();
-      bandpass.type = "bandpass";
-      bandpass.frequency.value = 1000;
-      bandpass.Q.value = 0.6;
-      const gain = ctx.createGain();
-      gain.gain.value = 0;
-      noise.connect(highpass);
-      highpass.connect(bandpass);
-      bandpass.connect(gain);
-      gain.connect(ctx.destination);
-      noise.start();
-      rainRef.current = { ctx: ctx, gain: gain };
+      const audio = new Audio("/rain.m4a");
+      audio.loop = true;
+      audio.volume = 0;
+      rainRef.current = audio;
     }
-    const r = rainRef.current;
-    if (r.ctx.state === "suspended") r.ctx.resume();
-    const target = rainOn ? 0 : 0.12;
-    r.gain.gain.linearRampToValueAtTime(target, r.ctx.currentTime + 0.8);
+    const audio = rainRef.current;
+    if (rainOn) {
+      audio.pause();
+    } else {
+      audio.currentTime = 0;
+      audio.play().catch(function () {});
+      audio.volume = 0.6;
+    }
     setRainOn(!rainOn);
   }, [rainOn]);
+
 
   return h(
     "div",
