@@ -415,32 +415,39 @@ function Feed(props) {
     { className: "fixed inset-0 z-30 flex items-end justify-center", style: { background: "rgba(0,0,0,0.6)" } },
     h(
       "div",
-      { className: "w-full max-w-md rounded-t-3xl px-5 pt-5 pb-8", style: { background: "#151A21", maxHeight: "80vh", overflowY: "auto" } },
-      h("h2", { className: "text-lg font-semibold text-white mb-4 text-right", dir: "rtl" }, "اختر قنواتك المفضلة"),
-      options.map(function (ch) {
-        const isOn = checked.indexOf(ch.id) !== -1;
-        return h("button", {
-          key: ch.id,
-          onClick: function () { toggle(ch.id); },
-          className: "w-full flex items-center justify-between gap-3 px-3 py-3 rounded-2xl mb-2",
-          style: { background: isOn ? ch.color + "22" : "rgba(255,255,255,0.04)" }
-        },
-          h("div", { className: "flex items-center gap-3" },
-            h("div", { className: "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs",
-              style: { background: ch.color + "33", color: ch.color } }, ch.freq),
-            h("span", { className: "text-[14px] text-white", dir: "rtl" }, ch.name)
-          ),
-          h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center", style: { background: isOn ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
-            isOn && h("span", { style: { color: "#000", fontSize: "12px" } }, "✓"))
-        );
-      }),
-      h("div", { className: "flex gap-3 mt-4" },
+      { className: "w-full max-w-md rounded-t-3xl flex flex-col", style: { background: "#151A21", maxHeight: "80vh" } },
+      h(
+        "div",
+        { className: "px-5 pt-5 pb-3 flex-1 overflow-y-auto" },
+        h("h2", { className: "text-lg font-semibold text-white mb-4 text-right", dir: "rtl" }, "اختر قنواتك المفضلة"),
+        options.map(function (ch) {
+          const isOn = checked.indexOf(ch.id) !== -1;
+          return h("button", {
+            key: ch.id,
+            onClick: function () { toggle(ch.id); },
+            className: "w-full flex items-center justify-between gap-3 px-3 py-3 rounded-2xl mb-2",
+            style: { background: isOn ? ch.color + "22" : "rgba(255,255,255,0.04)" }
+          },
+            h("div", { className: "flex items-center gap-3" },
+              h("div", { className: "w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-mono text-xs",
+                style: { background: ch.color + "33", color: ch.color } }, ch.freq),
+              h("span", { className: "text-[14px] text-white", dir: "rtl" }, ch.name)
+            ),
+            h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center", style: { background: isOn ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
+              isOn && h("span", { style: { color: "#000", fontSize: "12px" } }, "✓"))
+          );
+        })
+      ),
+      h(
+        "div",
+        { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
         h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "إلغاء"),
         h("button", { onClick: function () { onSave(checked); }, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
       )
     )
   );
 }
+
 
 
 
