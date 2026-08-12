@@ -425,7 +425,7 @@ function App() {
 
     const toggleRain = useCallback(function () {
     if (!rainRef.current) {
-      const audio = new Audio("/rain.m4a");
+      const audio = new Audio("/Rain.m4a");
       audio.loop = true;
       audio.volume = 0;
       rainRef.current = audio;
