@@ -267,7 +267,8 @@ function Feed(props) {
 
   const loadInitial = useCallback(function () {
     setStatus("loading");
-    Promise.all(sources.map(function (src) { return fetchChannelDeep(src.handle, 6); }))
+       const depth = sources.length > 1 ? Math.max(2, Math.round(12 / sources.length)) : 6;
+    Promise.all(sources.map(function (src) { return fetchChannelDeep(src.handle, depth); }))
 
       .then(function (results) {
         let merged = [];
