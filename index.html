@@ -317,9 +317,14 @@ function Feed(props) {
             newestIdRef.current[src.handle] = tagged[0].id;
           }
         });
-        if (fresh.length) {
-          fresh = shuffle(fresh);
-          setPosts(function (prev) { return fresh.concat(prev); });
+                if (fresh.length) {
+          if (sources.length === 1 && sources[0].ordered) {
+            fresh = fresh.slice().sort(function (a, b) { return a.id - b.id; });
+            setPosts(function (prev) { return prev.concat(fresh); });
+          } else {
+            fresh = shuffle(fresh);
+            setPosts(function (prev) { return fresh.concat(prev); });
+          }
         }
       })
       .catch(function () {})
