@@ -350,8 +350,13 @@ function Feed(props) {
             oldestIdRef.current[src.handle] = null;
           }
         });
-        older = shuffle(older);
-        setPosts(function (prev) { return prev.concat(older); });
+                if (sources.length === 1 && sources[0].ordered) {
+          older = older.slice().sort(function (a, b) { return a.id - b.id; });
+          setPosts(function (prev) { return older.concat(prev); });
+        } else {
+          older = shuffle(older);
+          setPosts(function (prev) { return prev.concat(older); });
+        }
       })
       .catch(function () {})
       .finally(function () { loadingMoreRef.current = false; });
