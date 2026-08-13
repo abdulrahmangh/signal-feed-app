@@ -380,11 +380,19 @@ function Feed(props) {
     return function () { clearInterval(interval); };
   }, [status, checkForNew]);
 
+    const [currentIndex, setCurrentIndex] = useState(0);
+  const rafRef = useRef(null);
+
   const handleScroll = useCallback(function () {
     const el = containerRef.current;
     if (!el) return;
     if (el.scrollHeight - el.scrollTop - el.clientHeight < el.clientHeight * 1.2) loadOlder();
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(function () {
+      setCurrentIndex(Math.round(el.scrollTop / el.clientHeight));
+    });
   }, [loadOlder]);
+
 
   return h(
     "div",
