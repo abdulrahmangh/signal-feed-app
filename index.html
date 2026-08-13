@@ -506,17 +506,15 @@ function ChannelList(props) {
   });
 
 
-      function saveCustom(ids) {
-    const wasFirstTime = !hasCustomized;
+        function saveCustom(ids) {
     setCustomIds(ids);
     setHasCustomized(true);
     try { localStorage.setItem("mixCustomIds", JSON.stringify(ids)); } catch (e) {}
     setShowPicker(false);
-    if (wasFirstTime) {
-      const mixChannel = CHANNELS.filter(function (c) { return c.mix; })[0];
-      onSelect(Object.assign({}, mixChannel, { customIds: ids }));
-    }
+    const mixChannel = CHANNELS.filter(function (c) { return c.mix; })[0];
+    onSelect(Object.assign({}, mixChannel, { customIds: ids }));
   }
+
 
 
   function handleSelect(ch) {
