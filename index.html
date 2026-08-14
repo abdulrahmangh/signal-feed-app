@@ -236,8 +236,8 @@ function Slide(props) {
     return h(
       "div",
       { className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start", background: "#0B0E11" } },
-      h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover", draggable: false,
-        style: { filter: "blur(30px) brightness(0.55)", transform: "scale(1.2)" } }),
+            h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover", draggable: false,
+        style: { filter: "blur(30px) brightness(0.85) saturate(1.4)", transform: "scale(1.2)" } }),
       h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-contain", draggable: false }),
       h("div", { className: "absolute inset-0",
         style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" } }),
