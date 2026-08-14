@@ -405,7 +405,8 @@ function Feed(props) {
   return h(
     "div",
     { className: "relative w-full h-full" },
-        h("button", { onClick: onBack, className: "absolute left-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm", style: { top: "calc(env(safe-area-inset-top, 0px) + 12px)" } }, h(IconArrowLeft)),
+           h("button", { onClick: onBack, className: "absolute left-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm", style: { top: "calc(env(safe-area-inset-top, 0px) + 64px)" } }, h(IconArrowLeft)),
+
 
   
         status === "loading" &&
