@@ -351,10 +351,14 @@ function Feed(props) {
       .finally(function () { if (manual) setRefreshing(false); });
   }, [channel]);
 
-  const loadOlder = useCallback(function () {
+    const loadOlder = useCallback(function () {
     if (loadingMoreRef.current) return;
     loadingMoreRef.current = true;
+    const allExhausted = sources.every(function (src) { return oldestIdRef.current[src.handle] == null; });
     Promise.all(sources.map(function (src) {
+      if (allExhausted) {
+        return fetchChannel(src.handle);
+      }
       const before = oldestIdRef.current[src.handle];
       if (before == null) return Promise.resolve({ posts: [], oldestId: null });
       return fetchChannel(src.handle, { before: before });
@@ -366,7 +370,7 @@ function Feed(props) {
           if (data.posts.length) {
             older = older.concat(tagPosts(data.posts, src));
             oldestIdRef.current[src.handle] = data.oldestId;
-          } else {
+          } else if (!allExhausted) {
             oldestIdRef.current[src.handle] = null;
           }
         });
@@ -381,6 +385,7 @@ function Feed(props) {
       .catch(function () {})
       .finally(function () { loadingMoreRef.current = false; });
   }, [channel]);
+
 
   useEffect(function () { loadInitial(); }, [loadInitial]);
 
