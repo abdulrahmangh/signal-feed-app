@@ -205,8 +205,9 @@ function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
   const caption = post.caption;
 
-  function handleShare() {
-    const text = (post.text || caption || "") + "\n\nنفائس الكلم ✨ https://signal-feed-app.vercel.app";
+    function handleShare() {
+    const text = (post.text || caption || "") + "\n\nنفائس الكلم ✨ https://www.muslim-tok.website";
+
     if (navigator.share) {
       navigator.share({ text: text }).catch(function () {});
     } else if (navigator.clipboard) {
