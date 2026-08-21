@@ -251,6 +251,77 @@ function IconRain(props) {
   );
 }
 
+function RoutineManager(props) {
+  const routine = props.routine, onSave = props.onSave, onClose = props.onClose;
+  const [items, setItems] = useState(routine);
+  const [name, setName] = useState("");
+  const [target, setTarget] = useState("33");
+
+  function addItem() {
+    const n = name.trim();
+    const t = parseInt(target, 10);
+    if (!n || !t || t <= 0) return;
+    setItems(items.concat([{ id: Date.now() + Math.random(), name: n, target: t, count: 0 }]));
+    setName("");
+    setTarget("33");
+  }
+
+  function removeItem(id) {
+    setItems(items.filter(function (it) { return it.id !== id; }));
+  }
+
+  return h(
+    "div",
+    { className: "fixed inset-0 z-50 flex items-end justify-center", style: { background: "rgba(0,0,0,0.6)" } },
+    h(
+      "div",
+      { className: "w-full max-w-md rounded-t-3xl flex flex-col", style: { background: "#151A21", maxHeight: "80vh" } },
+      h(
+        "div",
+        { className: "px-5 pt-5 pb-3 flex-1 overflow-y-auto" },
+        h("h2", { className: "text-lg font-semibold text-white mb-4 text-right", dir: "rtl" }, "قائمة الأذكار"),
+        items.length === 0 && h("p", { className: "text-[13px] text-white/40 text-center mb-4", dir: "rtl" }, "لم تُضِف أي ذكر بعد"),
+        items.map(function (it) {
+          const done = it.count >= it.target;
+          return h(
+            "div",
+            { key: it.id, className: "flex items-center justify-between gap-3 px-3 py-3 rounded-2xl mb-2",
+              style: { background: done ? "rgba(74,246,195,0.15)" : "rgba(255,255,255,0.04)" } },
+            h("div", { dir: "rtl" },
+              h("div", { className: "text-[14px] text-white" }, it.name),
+              h("div", { className: "text-[11px] font-mono", style: { color: done ? "#4AF6C3" : "#6B7480" } }, it.count + " / " + it.target)
+            ),
+            h("button", { onClick: function () { removeItem(it.id); }, className: "p-2 rounded-full text-white/50 text-[12px]" }, "🗑")
+          );
+        }),
+        h(
+          "div",
+          { className: "flex gap-2 mt-4" },
+          h("input", {
+            type: "text", value: name, placeholder: "اسم الذكر", dir: "rtl",
+            onChange: function (e) { setName(e.target.value); },
+            className: "flex-1 px-3 py-2 rounded-xl text-white text-[13px]",
+            style: { background: "rgba(255,255,255,0.06)", border: "none", outline: "none" }
+          }),
+          h("input", {
+            type: "number", value: target, placeholder: "العدد",
+            onChange: function (e) { setTarget(e.target.value); },
+            className: "w-20 px-3 py-2 rounded-xl text-white text-[13px] text-center",
+            style: { background: "rgba(255,255,255,0.06)", border: "none", outline: "none" }
+          }),
+          h("button", { onClick: addItem, className: "px-4 py-2 rounded-xl text-black text-[13px] font-semibold", style: { background: "#4AF6C3" } }, "+")
+        )
+      ),
+      h(
+        "div",
+        { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
+        h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "إلغاء"),
+        h("button", { onClick: function () { onSave(items); }, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
+      )
+    )
+  );
+}
+
 function TasbihCounter() {
   const [count, setCount] = useState(function () {
     try {
@@ -259,6 +330,28 @@ function TasbihCounter() {
     } catch (e) { return 0; }
   });
   const [locked, setLocked] = useState(false);
+  const [routine, setRoutine] = useState(function () {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tasbihRoutine") || "null");
+      return Array.isArray(saved) ? saved : [];
+    } catch (e) { return []; }
+  });
+  const [activeId, setActiveId] = useState(null);
+  const [showManager, setShowManager] = useState(false);
+
+  function persistRoutine(next) {
+    setRoutine(next);
+    try { localStorage.setItem("tasbihRoutine", JSON.stringify(next)); } catch (e) {}
+  }
+
+  useEffect(function () {
+    if (routine.length === 0) { setActiveId(null); return; }
+    const current = routine.find(function (it) { return it.id === activeId; });
+    if (!current) {
+      const firstIncomplete = routine.find(function (it) { return it.count < it.target; });
+      setActiveId(firstIncomplete ? firstIncomplete.id : routine[0].id);
+    }
+  }, [routine]);
 
   function playChime100() {
     try {
@@ -298,7 +391,7 @@ function TasbihCounter() {
     } catch (e) {}
   }
 
-  function incrementCount() {
+  function incrementGeneric() {
     if (navigator.vibrate) navigator.vibrate(10);
     setCount(function (prev) {
       const next = prev + 1;
@@ -312,14 +405,53 @@ function TasbihCounter() {
     });
   }
 
+  function incrementActiveItem() {
+    if (navigator.vibrate) navigator.vibrate(10);
+    const next = routine.map(function (it) {
+      if (it.id !== activeId) return it;
+      const newCount = it.count + 1;
+      if (newCount === it.target) {
+        playChime33();
+        if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+      }
+      return Object.assign({}, it, { count: newCount });
+    });
+    persistRoutine(next);
+    const justUpdated = next.find(function (it) { return it.id === activeId; });
+    if (justUpdated && justUpdated.count >= justUpdated.target) {
+      const nextIncomplete = next.find(function (it) { return it.count < it.target; });
+      if (nextIncomplete) setActiveId(nextIncomplete.id);
+    }
+  }
+
+  function handleTap() {
+    if (routine.length > 0 && activeId != null) {
+      incrementActiveItem();
+    } else {
+      incrementGeneric();
+    }
+  }
+
   function handleReset(e) {
-    e.stopPropagation();
-    setCount(0);
-    try { localStorage.setItem("tasbihCount", JSON.stringify(0)); } catch (e) {}
+    if (e) e.stopPropagation();
+    if (routine.length > 0 && activeId != null) {
+      const next = routine.map(function (it) { return it.id === activeId ? Object.assign({}, it, { count: 0 }) : it; });
+      persistRoutine(next);
+    } else {
+      setCount(0);
+      try { localStorage.setItem("tasbihCount", JSON.stringify(0)); } catch (e) {}
+    }
   }
 
   function renderBeads() {
-    const filled = count % 33 === 0 && count > 0 ? 33 : count % 33;
+    let target = 33, current = 0;
+    if (routine.length > 0 && activeId != null) {
+      const active = routine.find(function (it) { return it.id === activeId; });
+      if (active) { target = active.target; current = Math.min(active.count, active.target); }
+    } else {
+      current = count % 33 === 0 && count > 0 ? 33 : count % 33;
+    }
+    const filled = target > 0 ? Math.round((current / target) * 33) : 0;
     const beads = [];
     for (let i = 0; i < 33; i++) {
       const angle = (i / 33) * 2 * Math.PI - Math.PI / 2;
@@ -345,28 +477,34 @@ function TasbihCounter() {
     return beads;
   }
 
+  const activeItem = routine.length > 0 ? routine.find(function (it) { return it.id === activeId; }) : null;
+
   return h(
     React.Fragment,
     null,
     h(
       "div",
       { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
-      h("button", { onClick: incrementCount, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
+      h("button", { onClick: handleTap, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
         h("span", { style: { fontSize: 16 } }, "📿"),
-        h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, "عداد الذكر"),
-        h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, count)
+        h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
+        h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, activeItem ? (activeItem.count + "/" + activeItem.target) : count)
       ),
       h(
         "div",
         { className: "flex flex-col items-center gap-1" },
-        count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺"),
-                        h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconExpand))
-
+        (activeItem ? activeItem.count > 0 : count > 0) && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺"),
+        h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconExpand))
       )
     ),
     locked && h(
       "div",
-      { className: "fixed inset-0 z-50 flex flex-col items-center justify-center", style: { background: "rgba(11,14,17,0.97)" }, onClick: incrementCount },
+      { className: "fixed inset-0 z-50 flex flex-col items-center justify-center", style: { background: "rgba(11,14,17,0.97)" }, onClick: handleTap },
+      h("button", {
+        onClick: function (e) { e.stopPropagation(); setShowManager(true); },
+        className: "absolute left-4 p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[14px]",
+        style: { top: "calc(env(safe-area-inset-top, 0px) + 16px)" }
+      }, "📋"),
       h(
         "div",
         { className: "relative", style: { width: 240, height: 240 } },
@@ -374,27 +512,42 @@ function TasbihCounter() {
         h(
           "div",
           { className: "absolute inset-0 flex flex-col items-center justify-center" },
-          h("div", { className: "font-mono", style: { fontSize: 56, color: "#4AF6C3" } }, count),
-          h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, "عداد الذكر")
+          h("div", { className: "font-mono", style: { fontSize: activeItem ? 40 : 56, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
+          h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر")
         )
       ),
-            h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
+      routine.length > 0 && h(
+        "div",
+        { className: "flex gap-2 flex-wrap justify-center mt-6 px-8", onClick: function (e) { e.stopPropagation(); } },
+        routine.map(function (it) {
+          const done = it.count >= it.target;
+          const isActive = it.id === activeId;
+          return h("button", {
+            key: it.id,
+            onClick: function () { setActiveId(it.id); },
+            className: "px-3 py-1.5 rounded-full text-[11px]",
+            dir: "rtl",
+            style: {
+              background: done ? "rgba(74,246,195,0.25)" : (isActive ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)"),
+              color: done ? "#4AF6C3" : "#fff",
+              border: isActive ? "1px solid #4AF6C3" : "1px solid transparent"
+            }
+          }, (done ? "✓ " : "") + it.name);
+        })
+      ),
+      h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
       h(
         "div",
         { className: "absolute flex items-center gap-3", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" } },
-        count > 0 && h("button", {
-          onClick: handleReset,
-          className: "px-5 py-3 rounded-full text-white/70 text-[13px]",
-          style: { background: "rgba(255,255,255,0.1)" }
-        }, "↺ تصفير"),
-        h("button", {
-          onClick: function (e) { e.stopPropagation(); setLocked(false); },
-          className: "px-5 py-3 rounded-full text-white text-[13px]",
-          style: { background: "rgba(255,255,255,0.1)" }
-        }, "🔓 إلغاء القفل")
+        (activeItem ? activeItem.count > 0 : count > 0) && h("button", { onClick: handleReset, className: "px-5 py-3 rounded-full text-white/70 text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "↺ تصفير"),
+        h("button", { onClick: function (e) { e.stopPropagation(); setLocked(false); }, className: "px-5 py-3 rounded-full text-white text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "🔓 إلغاء القفل")
       )
-    )
-
+    ),
+    showManager && h(RoutineManager, {
+      routine: routine,
+      onSave: function (items) { persistRoutine(items); setShowManager(false); },
+      onClose: function () { setShowManager(false); }
+    })
   );
 }
 
