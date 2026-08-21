@@ -176,6 +176,17 @@ function IconEye() {
     h("polyline", { points: "9 18 15 12 9 6" })
   );
 }
+function IconShare() {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("circle", { cx: 18, cy: 5, r: 3 }),
+    h("circle", { cx: 6, cy: 12, r: 3 }),
+    h("circle", { cx: 18, cy: 19, r: 3 }),
+    h("line", { x1: 8.59, y1: 13.51, x2: 15.42, y2: 17.49 }),
+    h("line", { x1: 15.41, y1: 6.51, x2: 8.59, y2: 10.49 })
+  );
+}
 
 function IconRain(props) {
   const on = props.on;
@@ -193,6 +204,16 @@ function IconRain(props) {
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
   const caption = post.caption;
+
+  function handleShare() {
+    const text = (post.text || caption || "") + "\n\nنفائس الكلم ✨ https://signal-feed-app.vercel.app";
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function () {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).catch(function () {});
+    }
+  }
+
   return h(
     React.Fragment,
     null,
@@ -219,13 +240,19 @@ function SlideChrome(props) {
             style: { textShadow: light ? "0 1px 8px rgba(0,0,0,0.7)" : "none" } },
           caption
         ),
-      h(
+            h(
         "div",
-        { className: "flex items-center gap-3 text-[11px] font-mono " + (light ? "text-white/70" : "text-[#6B7480]") },
-        post.views != null &&
-          h("span", { className: "flex items-center gap-1" }, h(IconEye), " " + post.views.toLocaleString()),
-        h("span", null, timeAgo(post.time) + " ago")
+        { className: "flex items-center justify-between" },
+        h(
+          "div",
+          { className: "flex items-center gap-3 text-[11px] font-mono " + (light ? "text-white/70" : "text-[#6B7480]") },
+          post.views != null &&
+            h("span", { className: "flex items-center gap-1" }, h(IconEye), " " + post.views.toLocaleString()),
+          h("span", null, timeAgo(post.time) + " ago")
+        ),
+        h("button", { onClick: handleShare, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconShare))
       )
+
     )
   );
 }
