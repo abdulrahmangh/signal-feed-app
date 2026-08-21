@@ -238,22 +238,40 @@ function IconRain(props) {
 }
 
 function TasbihCounter() {
-  const PHRASES = ["سبحان الله", "الحمد لله", "الله أكبر"];
-  const [state, setState] = useState(function () {
+  const [count, setCount] = useState(function () {
     try {
-      const saved = JSON.parse(localStorage.getItem("tasbihState") || "null");
-      return saved || { phraseIndex: 0, count: 0 };
-    } catch (e) { return { phraseIndex: 0, count: 0 }; }
+      const saved = JSON.parse(localStorage.getItem("tasbihCount") || "null");
+      return typeof saved === "number" ? saved : 0;
+    } catch (e) { return 0; }
   });
 
-    function handleTap() {
+  function handleTap() {
     if (navigator.vibrate) navigator.vibrate(10);
-    setState(function (prev) {
-      const next = { phraseIndex: prev.phraseIndex, count: prev.count + 1 };
-      try { localStorage.setItem("tasbihState", JSON.stringify(next)); } catch (e) {}
+    setCount(function (prev) {
+      const next = prev + 1;
+      try { localStorage.setItem("tasbihCount", JSON.stringify(next)); } catch (e) {}
       return next;
     });
   }
+
+  function handleReset(e) {
+    e.stopPropagation();
+    setCount(0);
+    try { localStorage.setItem("tasbihCount", JSON.stringify(0)); } catch (e) {}
+  }
+
+  return h(
+    "div",
+    { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
+    h("button", { onClick: handleTap, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
+      h("span", { style: { fontSize: 16 } }, "📿"),
+      h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, "عداد الذكر"),
+      h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, count)
+    ),
+    count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺")
+  );
+}
+
 
 
   function handleReset(e) {
