@@ -225,15 +225,7 @@ function IconBookmark(props) {
   );
 }
 
-function IconHeadphones(props) {
-  const active = props.active;
-  return h(
-    "svg",
-    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: active ? "#4AF6C3" : "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
-    h("path", { d: "M3 18v-6a9 9 0 0 1 18 0v6" }),
-    h("path", { d: "M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" })
-  );
-}
+
 
 
 
@@ -393,56 +385,15 @@ function TasbihCounter() {
 
   
 
-
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
   const caption = post.caption;
   const favKey = channel.id + "-" + post.id;
   const [isFav, setIsFav] = useState(function () { return isFavorited(favKey); });
-  const [recitationState, setRecitationState] = useState("idle");
-  const audioRef = useRef(null);
-
-  useEffect(function () {
-    return function () {
-      if (audioRef.current) audioRef.current.pause();
-    };
-  }, []);
 
   function handleToggleFavorite() {
     toggleFavoriteStorage(favKey, post, channel);
     setIsFav(!isFav);
-  }
-
-  function handleRecitation() {
-    if (recitationState === "playing") {
-      if (audioRef.current) audioRef.current.pause();
-      setRecitationState("idle");
-      return;
-    }
-    if (recitationState === "loading") return;
-    const source = post.text || caption || "";
-    const words = source.trim().split(/\s+/).slice(0, 5).join(" ");
-    if (!words) return;
-    setRecitationState("loading");
-    fetch("https://api.alquran.cloud/v1/search/" + encodeURIComponent(words) + "/all/ar")
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        const match = data && data.data && data.data.matches && data.data.matches[0];
-        if (!match) {
-          setRecitationState("notfound");
-          setTimeout(function () { setRecitationState("idle"); }, 1500);
-          return;
-        }
-        const url = "https://cdn.islamic.network/quran/audio/128/ar.alafasy/" + match.number + ".mp3";
-        const audio = new Audio(url);
-        audioRef.current = audio;
-        audio.onended = function () { setRecitationState("idle"); };
-        audio.play().then(function () { setRecitationState("playing"); }).catch(function () { setRecitationState("idle"); });
-      })
-      .catch(function () {
-        setRecitationState("notfound");
-        setTimeout(function () { setRecitationState("idle"); }, 1500);
-      });
   }
 
     function handleShare() {
@@ -513,13 +464,6 @@ function SlideChrome(props) {
         h(
           "div",
           { className: "flex items-center gap-2" },
-          h("button", { onClick: handleRecitation, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" },
-            recitationState === "loading"
-              ? h("span", { style: { display: "inline-block", width: 14, height: 14, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#4AF6C3", borderRadius: "50%", animation: "spin 0.8s linear infinite" } })
-              : recitationState === "notfound"
-              ? h("span", { style: { fontSize: 12 } }, "❌")
-              : h(IconHeadphones, { active: recitationState === "playing" })
-          ),
           h("button", { onClick: handleToggleFavorite, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconBookmark, { filled: isFav })),
           h("button", { onClick: handleShareImage, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconCamera)),
           h("button", { onClick: handleShare, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconShare))
@@ -529,6 +473,7 @@ function SlideChrome(props) {
     )
   );
 }
+
 
 
 function Slide(props) {
