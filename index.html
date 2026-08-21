@@ -948,7 +948,16 @@ function Feed(props) {
         "div",
         { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
         h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "إلغاء"),
-        h("button", { onClick: function () { onSave(checked); }, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
+                h("button", {
+          onClick: function () {
+            const n = name.trim();
+            const t = parseInt(target, 10);
+            const finalItems = (n && t && t > 0) ? items.concat([{ id: Date.now() + Math.random(), name: n, target: t, count: 0 }]) : items;
+            onSave(finalItems);
+          },
+          className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" }
+        }, "حفظ")
+
       )
     )
   );
