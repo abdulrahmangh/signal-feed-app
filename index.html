@@ -367,13 +367,23 @@ function TasbihCounter() {
           h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, "عداد الذكر")
         )
       ),
-      h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
-      h("button", {
-        onClick: function (e) { e.stopPropagation(); setLocked(false); },
-        className: "absolute px-5 py-3 rounded-full text-white text-[13px]",
-        style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", background: "rgba(255,255,255,0.1)" }
-      }, "🔓 إلغاء القفل")
+            h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
+      h(
+        "div",
+        { className: "absolute flex items-center gap-3", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" } },
+        count > 0 && h("button", {
+          onClick: handleReset,
+          className: "px-5 py-3 rounded-full text-white/70 text-[13px]",
+          style: { background: "rgba(255,255,255,0.1)" }
+        }, "↺ تصفير"),
+        h("button", {
+          onClick: function (e) { e.stopPropagation(); setLocked(false); },
+          className: "px-5 py-3 rounded-full text-white text-[13px]",
+          style: { background: "rgba(255,255,255,0.1)" }
+        }, "🔓 إلغاء القفل")
+      )
     )
+
   );
 }
 
