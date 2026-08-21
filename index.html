@@ -307,7 +307,7 @@ function TasbihCounter() {
   return h(
     React.Fragment,
     null,
-    h(
+        h(
       "div",
       { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
       h("button", { onClick: incrementCount, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
@@ -315,9 +315,14 @@ function TasbihCounter() {
         h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, "عداد الذكر"),
         h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, count)
       ),
-      h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "🔒"),
-      count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺")
+      h(
+        "div",
+        { className: "flex flex-col items-center gap-1" },
+        count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺"),
+        h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "🔒")
+      )
     ),
+
     locked && h(
       "div",
       { className: "fixed inset-0 z-50 flex flex-col items-center justify-center", style: { background: "rgba(11,14,17,0.97)" }, onClick: incrementCount },
