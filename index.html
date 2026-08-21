@@ -350,7 +350,7 @@ function TasbihCounter() {
         "div",
         { className: "flex flex-col items-center gap-1" },
         count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺"),
-        h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "🔒")
+                h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "⛶")
       )
     ),
     locked && h(
