@@ -237,6 +237,50 @@ function IconRain(props) {
   );
 }
 
+function TasbihCounter() {
+  const PHRASES = ["سبحان الله", "الحمد لله", "الله أكبر"];
+  const [state, setState] = useState(function () {
+    try {
+      const saved = JSON.parse(localStorage.getItem("tasbihState") || "null");
+      return saved || { phraseIndex: 0, count: 0 };
+    } catch (e) { return { phraseIndex: 0, count: 0 }; }
+  });
+
+  function handleTap() {
+    if (navigator.vibrate) navigator.vibrate(10);
+    setState(function (prev) {
+      let count = prev.count + 1;
+      let phraseIndex = prev.phraseIndex;
+      if (count >= 33) {
+        count = 0;
+        phraseIndex = (phraseIndex + 1) % PHRASES.length;
+        if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+      }
+      const next = { phraseIndex: phraseIndex, count: count };
+      try { localStorage.setItem("tasbihState", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+  }
+
+  function handleReset(e) {
+    e.stopPropagation();
+    const next = { phraseIndex: 0, count: 0 };
+    setState(next);
+    try { localStorage.setItem("tasbihState", JSON.stringify(next)); } catch (e) {}
+  }
+
+  return h(
+    "div",
+    { className: "absolute left-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" } },
+    h("button", { onClick: handleTap, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
+      h("span", { style: { fontSize: 16 } }, "📿"),
+      h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, PHRASES[state.phraseIndex]),
+      h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, state.count)
+    ),
+    state.count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺")
+  );
+}
+
 
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
@@ -815,6 +859,7 @@ function App() {
         h("button", { onClick: toggleRain, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: rainOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 12px)" } }, "🌧️"),
     h("button", { onClick: toggleWaves, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: wavesOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 60px)" } }, "🌊"),
     h("button", { onClick: toggleFire, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: fireOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 108px)" } }, "🔥"),
+    h(TasbihCounter),
 
     active ? h(Feed, { channel: active, onBack: function () { setActive(null); } }) : h(ChannelList, { onSelect: setActive })
   );
