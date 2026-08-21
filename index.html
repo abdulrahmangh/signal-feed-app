@@ -15,6 +15,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
@@ -187,6 +188,14 @@ function IconShare() {
     h("line", { x1: 15.41, y1: 6.51, x2: 8.59, y2: 10.49 })
   );
 }
+function IconCamera() {
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("path", { d: "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2Z" }),
+    h("circle", { cx: 12, cy: 13, r: 4 })
+  );
+}
 
 function IconRain(props) {
   const on = props.on;
@@ -213,6 +222,25 @@ function SlideChrome(props) {
     } else if (navigator.clipboard) {
       navigator.clipboard.writeText(text).catch(function () {});
     }
+  }
+
+  function handleShareImage() {
+    const node = props.captureRef && props.captureRef.current;
+    if (!node || !window.html2canvas) return;
+    window.html2canvas(node, { useCORS: true, backgroundColor: "#0B0E11" }).then(function (canvas) {
+      canvas.toBlob(function (blob) {
+        if (!blob) return;
+        const file = new File([blob], "nafais-alkalim.png", { type: "image/png" });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({ files: [file], text: "نفائس الكلم ✨ https://www.muslim-tok.website" }).catch(function () {});
+        } else {
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = "nafais-alkalim.png";
+          link.click();
+        }
+      });
+    }).catch(function () {});
   }
 
   return h(
@@ -251,7 +279,12 @@ function SlideChrome(props) {
             h("span", { className: "flex items-center gap-1" }, h(IconEye), " " + post.views.toLocaleString()),
           h("span", null, timeAgo(post.time) + " ago")
         ),
-        h("button", { onClick: handleShare, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconShare))
+        h(
+          "div",
+          { className: "flex items-center gap-2" },
+          h("button", { onClick: handleShareImage, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconCamera)),
+          h("button", { onClick: handleShare, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconShare))
+        )
       )
 
     )
@@ -262,17 +295,18 @@ function Slide(props) {
   const post = props.post, channel = props.channel;
   const rtlText = isRtl(post.text);
   const rtlCaption = isRtl(post.caption);
+  const slideRef = useRef(null);
 
     if (post.type === "photo" && post.imageUrl) {
     return h(
       "div",
-      { className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start", background: "#0B0E11" } },
+      { ref: slideRef, className: "relative w-full h-full flex-shrink-0 overflow-hidden", style: { scrollSnapAlign: "start", background: "#0B0E11" } },
             h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover", draggable: false,
         style: { filter: "blur(30px) brightness(0.85) saturate(1.4)", transform: "scale(1.2)" } }),
       h("img", { src: post.imageUrl, alt: "", className: "absolute inset-0 w-full h-full object-contain", draggable: false }),
       h("div", { className: "absolute inset-0",
         style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.85) 100%)" } }),
-      h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
+      h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption, captureRef: slideRef })
     );
   }
 
@@ -287,14 +321,14 @@ function Slide(props) {
 
   return h(
     "div",
-    { className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
+    { ref: slideRef, className: "relative w-full h-full flex-shrink-0 overflow-hidden flex items-center justify-center px-8",
       style: { scrollSnapAlign: "start", background: "#0B0E11" } },
     bgUrl && h("img", { src: bgUrl, alt: "", className: "absolute inset-0 w-full h-full object-cover kenburns-img", draggable: false }),
     h("div", { className: "absolute inset-0", style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 45%, rgba(0,0,0,0.65) 100%)" } }),
     h("div", { className: "relative backdrop-blur-md rounded-3xl px-6 py-8", style: { background: "rgba(0,0,0,0.28)" } },
       h("p", { className: "leading-loose font-semibold text-center text-white", dir: rtlText ? "rtl" : "ltr", style: { maxWidth: 320, fontSize: fontSizeForText(post.text) + "px" } }, post.text)
     ),
-    h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption })
+    h(SlideChrome, { post: post, channel: channel, light: true, rtlCaption: rtlCaption, captureRef: slideRef })
   );
 }
 
@@ -601,7 +635,7 @@ function ChannelList(props) {
         h("div", { className: "flex items-center gap-2 text-[#4AF6C3] mb-1" },
           h("span", { className: "text-[11px] font-mono tracking-widest uppercase" }, "developed by: Abu Sanad  ")),
         h("h1", { className: "text-2xl font-semibold text-white tracking-tight" }, "✨نفائس الكلم"),
-        h("p", { className: "text-sm text-white/70 mt-1" }, " نُثمِّن وقتك 🕌")
+        h("p", { className: "text-sm text-white/70 mt-1" }, " نُثمِّن وقتك 🕌")
       )
     ),
 
