@@ -79,6 +79,8 @@ const CHANNELS = [
 
 ];
 
+const FAVORITES_CHANNEL = { id: "favorites", handle: null, name: "المفضلة", freq: "⭐", color: "#FFD966", favorites: true };
+
 function shuffleArray(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -130,6 +132,24 @@ function fontSizeForText(text) {
   if (len > 200) return 21;
   if (len > 120) return 24;
   return 28;
+}
+
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem("favoritePosts") || "[]"); } catch (e) { return []; }
+}
+function isFavorited(key) {
+  return getFavorites().some(function (f) { return f.key === key; });
+}
+function toggleFavoriteStorage(key, post, channel) {
+  const favs = getFavorites();
+  const idx = favs.findIndex(function (f) { return f.key === key; });
+  if (idx !== -1) {
+    favs.splice(idx, 1);
+  } else {
+    favs.unshift({ key: key, post: post, channel: channel, savedAt: Date.now() });
+  }
+  try { localStorage.setItem("favoritePosts", JSON.stringify(favs)); } catch (e) {}
+  return favs;
 }
 
 async function fetchChannel(handle, params) {
@@ -196,6 +216,14 @@ function IconCamera() {
     h("circle", { cx: 12, cy: 13, r: 4 })
   );
 }
+function IconBookmark(props) {
+  const filled = props.filled;
+  return h(
+    "svg",
+    { width: 16, height: 16, viewBox: "0 0 24 24", fill: filled ? "#FFD966" : "none", stroke: filled ? "#FFD966" : "#fff", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" },
+    h("path", { d: "M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" })
+  );
+}
 
 function IconRain(props) {
   const on = props.on;
@@ -213,6 +241,13 @@ function IconRain(props) {
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
   const caption = post.caption;
+  const favKey = channel.id + "-" + post.id;
+  const [isFav, setIsFav] = useState(function () { return isFavorited(favKey); });
+
+  function handleToggleFavorite() {
+    toggleFavoriteStorage(favKey, post, channel);
+    setIsFav(!isFav);
+  }
 
     function handleShare() {
     const text = (post.text || caption || "") + "\n\nنفائس الكلم ✨ https://www.muslim-tok.website";
@@ -282,6 +317,7 @@ function SlideChrome(props) {
         h(
           "div",
           { className: "flex items-center gap-2" },
+          h("button", { onClick: handleToggleFavorite, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconBookmark, { filled: isFav })),
           h("button", { onClick: handleShareImage, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconCamera)),
           h("button", { onClick: handleShare, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm" }, h(IconShare))
         )
@@ -332,8 +368,51 @@ function Slide(props) {
   );
 }
 
+function FavoritesFeed(props) {
+  const onBack = props.onBack;
+  const [favs] = useState(function () { return getFavorites(); });
+  const containerRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const rafRef = useRef(null);
+
+  const handleScroll = useCallback(function () {
+    const el = containerRef.current;
+    if (!el) return;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(function () {
+      setCurrentIndex(Math.round(el.scrollTop / el.clientHeight));
+    });
+  }, []);
+
+  if (!favs.length) {
+    return h(
+      "div",
+      { className: "relative w-full h-full" },
+      h("button", { onClick: onBack, className: "absolute left-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm", style: { top: "calc(env(safe-area-inset-top, 0px) + 64px)" } }, h(IconArrowLeft)),
+      h("div", { className: "w-full h-full flex flex-col items-center justify-center gap-3 px-8", style: { background: "#0B0E11" } },
+        h("div", { style: { fontSize: 34 } }, "⭐"),
+        h("span", { className: "text-[13px] font-mono text-[#6B7480] text-center" }, "لم تحفظ أي منشور بعد"))
+    );
+  }
+
+  return h(
+    "div",
+    { className: "relative w-full h-full" },
+    h("button", { onClick: onBack, className: "absolute left-4 z-10 p-2 rounded-full bg-black/35 backdrop-blur-sm", style: { top: "calc(env(safe-area-inset-top, 0px) + 64px)" } }, h(IconArrowLeft)),
+    h("div", { ref: containerRef, onScroll: handleScroll, className: "w-full h-full overflow-y-scroll", style: { scrollSnapType: "y mandatory" } },
+      favs.map(function (f, i) {
+        if (i >= currentIndex - 1 && i <= currentIndex + 3) {
+          return h(Slide, { key: f.key, post: f.post, channel: f.channel });
+        }
+        return h("div", { key: f.key, className: "w-full h-full flex-shrink-0", style: { scrollSnapAlign: "start", background: "#0B0E11" } });
+      })
+    )
+  );
+}
+
 function Feed(props) {
   const channel = props.channel, onBack = props.onBack;
+  if (channel.favorites) return h(FavoritesFeed, { onBack: onBack });
   const sources = channel.mix
     ? (channel.customIds && channel.customIds.length
         ? CHANNELS.filter(function (c) { return channel.customIds.indexOf(c.id) !== -1; })
@@ -562,7 +641,7 @@ function ChannelList(props) {
     const first = CHANNELS[0];
     const second = CHANNELS.filter(function (c) { return c.id === "muslim_tok_s"; })[0];
     const rest = shuffleArray(CHANNELS.filter(function (c) { return c.id !== "mix" && c.id !== "muslim_tok_s"; }));
-    return [first, second].concat(rest);
+    return [first, second, FAVORITES_CHANNEL].concat(rest);
   });
 
     const videoRef = useRef(null);
@@ -590,6 +669,10 @@ function ChannelList(props) {
 
 
   function handleSelect(ch) {
+    if (ch.favorites) {
+      onSelect(ch);
+      return;
+    }
     if (ch.mix) {
       if (!hasCustomized) {
         setShowPicker(true);
