@@ -244,6 +244,7 @@ function TasbihCounter() {
       return typeof saved === "number" ? saved : 0;
     } catch (e) { return 0; }
   });
+  const [locked, setLocked] = useState(false);
 
   function playChime100() {
     try {
@@ -283,7 +284,7 @@ function TasbihCounter() {
     } catch (e) {}
   }
 
-  function handleTap() {
+  function incrementCount() {
     if (navigator.vibrate) navigator.vibrate(10);
     setCount(function (prev) {
       const next = prev + 1;
@@ -304,16 +305,35 @@ function TasbihCounter() {
   }
 
   return h(
-    "div",
-    { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
-    h("button", { onClick: handleTap, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
-      h("span", { style: { fontSize: 16 } }, "📿"),
-      h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, "عداد الذكر"),
-      h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, count)
+    React.Fragment,
+    null,
+    h(
+      "div",
+      { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
+      h("button", { onClick: incrementCount, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
+        h("span", { style: { fontSize: 16 } }, "📿"),
+        h("span", { className: "text-[12px] text-white font-medium", dir: "rtl" }, "عداد الذكر"),
+        h("span", { className: "text-[12px] font-mono text-[#4AF6C3]" }, count)
+      ),
+      h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "🔒"),
+      count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺")
     ),
-    count > 0 && h("button", { onClick: handleReset, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white/50 text-[12px]" }, "↺")
+    locked && h(
+      "div",
+      { className: "fixed inset-0 z-50 flex flex-col items-center justify-center", style: { background: "rgba(11,14,17,0.97)" }, onClick: incrementCount },
+      h("div", { style: { fontSize: 64 } }, "📿"),
+      h("div", { className: "font-mono", style: { fontSize: 56, color: "#4AF6C3" } }, count),
+      h("div", { className: "text-white text-[16px] mt-1", dir: "rtl" }, "عداد الذكر"),
+      h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
+      h("button", {
+        onClick: function (e) { e.stopPropagation(); setLocked(false); },
+        className: "absolute px-5 py-3 rounded-full text-white text-[13px]",
+        style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)", background: "rgba(255,255,255,0.1)" }
+      }, "🔓 إلغاء القفل")
+    )
   );
 }
+
 
 
 
