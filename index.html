@@ -304,10 +304,37 @@ function TasbihCounter() {
     try { localStorage.setItem("tasbihCount", JSON.stringify(0)); } catch (e) {}
   }
 
+  function renderBeads() {
+    const filled = count % 33 === 0 && count > 0 ? 33 : count % 33;
+    const beads = [];
+    for (let i = 0; i < 33; i++) {
+      const angle = (i / 33) * 2 * Math.PI - Math.PI / 2;
+      const x = 50 + 44 * Math.cos(angle);
+      const y = 50 + 44 * Math.sin(angle);
+      const isFilled = i < filled;
+      const isLatest = i === filled - 1;
+      beads.push(h("div", {
+        key: i,
+        className: "absolute rounded-full",
+        style: {
+          width: isLatest ? 13 : (isFilled ? 10 : 7),
+          height: isLatest ? 13 : (isFilled ? 10 : 7),
+          background: isFilled ? "#4AF6C3" : "rgba(255,255,255,0.15)",
+          boxShadow: isLatest ? "0 0 10px #4AF6C3" : "none",
+          left: x + "%",
+          top: y + "%",
+          transform: "translate(-50%, -50%)",
+          transition: "all 0.25s ease"
+        }
+      }));
+    }
+    return beads;
+  }
+
   return h(
     React.Fragment,
     null,
-        h(
+    h(
       "div",
       { className: "absolute right-4 z-20 flex items-center gap-1", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 76px)" } },
       h("button", { onClick: incrementCount, className: "flex items-center gap-2 pl-3 pr-4 py-2 rounded-full bg-black/35 backdrop-blur-sm active:opacity-70" },
@@ -322,13 +349,20 @@ function TasbihCounter() {
         h("button", { onClick: function () { setLocked(true); }, className: "p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[13px]" }, "🔒")
       )
     ),
-
     locked && h(
       "div",
       { className: "fixed inset-0 z-50 flex flex-col items-center justify-center", style: { background: "rgba(11,14,17,0.97)" }, onClick: incrementCount },
-      h("div", { style: { fontSize: 64 } }, "📿"),
-      h("div", { className: "font-mono", style: { fontSize: 56, color: "#4AF6C3" } }, count),
-      h("div", { className: "text-white text-[16px] mt-1", dir: "rtl" }, "عداد الذكر"),
+      h(
+        "div",
+        { className: "relative", style: { width: 240, height: 240 } },
+        renderBeads(),
+        h(
+          "div",
+          { className: "absolute inset-0 flex flex-col items-center justify-center" },
+          h("div", { className: "font-mono", style: { fontSize: 56, color: "#4AF6C3" } }, count),
+          h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, "عداد الذكر")
+        )
+      ),
       h("p", { className: "text-[#6B7480] text-[12px] mt-6", dir: "rtl" }, "اضغط في أي مكان للعد"),
       h("button", {
         onClick: function (e) { e.stopPropagation(); setLocked(false); },
@@ -338,6 +372,7 @@ function TasbihCounter() {
     )
   );
 }
+
 
 
 
