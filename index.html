@@ -246,21 +246,15 @@ function TasbihCounter() {
     } catch (e) { return { phraseIndex: 0, count: 0 }; }
   });
 
-  function handleTap() {
+    function handleTap() {
     if (navigator.vibrate) navigator.vibrate(10);
     setState(function (prev) {
-      let count = prev.count + 1;
-      let phraseIndex = prev.phraseIndex;
-      if (count >= 33) {
-        count = 0;
-        phraseIndex = (phraseIndex + 1) % PHRASES.length;
-        if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
-      }
-      const next = { phraseIndex: phraseIndex, count: count };
+      const next = { phraseIndex: prev.phraseIndex, count: prev.count + 1 };
       try { localStorage.setItem("tasbihState", JSON.stringify(next)); } catch (e) {}
       return next;
     });
   }
+
 
   function handleReset(e) {
     e.stopPropagation();
