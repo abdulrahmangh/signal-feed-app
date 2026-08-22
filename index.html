@@ -252,22 +252,26 @@ function IconRain(props) {
 }
 
 function RoutineManager(props) {
-  const routine = props.routine, onSave = props.onSave, onClose = props.onClose;
+  const routine = props.routine, onChange = props.onChange, onClose = props.onClose;
   const [items, setItems] = useState(routine);
   const [name, setName] = useState("");
   const [target, setTarget] = useState("33");
 
-  function addItem() {
+  function handleSave() {
     const n = name.trim();
     const t = parseInt(target, 10);
     if (!n || !t || t <= 0) return;
-    setItems(items.concat([{ id: Date.now() + Math.random(), name: n, target: t, count: 0 }]));
+    const next = items.concat([{ id: Date.now() + Math.random(), name: n, target: t, count: 0 }]);
+    setItems(next);
     setName("");
     setTarget("33");
+    onChange(next);
   }
 
   function removeItem(id) {
-    setItems(items.filter(function (it) { return it.id !== id; }));
+    const next = items.filter(function (it) { return it.id !== id; });
+    setItems(next);
+    onChange(next);
   }
 
   return h(
@@ -294,10 +298,9 @@ function RoutineManager(props) {
             h("button", { onClick: function () { removeItem(it.id); }, className: "p-2 rounded-full text-white/50 text-[12px]" }, "🗑")
           );
         }),
-                h(
+        h(
           "div",
           { className: "flex gap-2 mt-4" },
-          h("button", { onClick: addItem, className: "px-4 py-2 rounded-xl text-black text-[13px] font-semibold", style: { background: "#4AF6C3" } }, "+"),
           h("input", {
             type: "text", value: name, placeholder: "اسم الذكر", dir: "rtl",
             onChange: function (e) { setName(e.target.value); },
@@ -311,13 +314,12 @@ function RoutineManager(props) {
             style: { background: "rgba(255,255,255,0.06)", border: "none", outline: "none" }
           })
         )
-
       ),
       h(
         "div",
         { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
-        h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "إلغاء"),
-        h("button", { onClick: function () { onSave(items); }, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
+        h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "تم"),
+        h("button", { onClick: handleSave, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
       )
     )
   );
@@ -546,19 +548,12 @@ function TasbihCounter() {
     ),
     showManager && h(RoutineManager, {
       routine: routine,
-      onSave: function (items) { persistRoutine(items); setShowManager(false); },
+      onChange: function (items) { persistRoutine(items); },
       onClose: function () { setShowManager(false); }
     })
   );
 }
 
-
-
-
-
-
-
-  
 
 function SlideChrome(props) {
   const post = props.post, channel = props.channel, light = props.light, rtlCaption = props.rtlCaption;
@@ -949,16 +944,7 @@ function Feed(props) {
         "div",
         { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
         h("button", { onClick: onClose, className: "flex-1 py-3 rounded-2xl text-white/70", style: { background: "rgba(255,255,255,0.06)" } }, "إلغاء"),
-                h("button", {
-          onClick: function () {
-            const n = name.trim();
-            const t = parseInt(target, 10);
-            const finalItems = (n && t && t > 0) ? items.concat([{ id: Date.now() + Math.random(), name: n, target: t, count: 0 }]) : items;
-            onSave(finalItems);
-          },
-          className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" }
-        }, "حفظ")
-
+        h("button", { onClick: function () { onSave(checked); }, className: "flex-1 py-3 rounded-2xl text-black font-semibold", style: { background: "#4AF6C3" } }, "حفظ")
       )
     )
   );
