@@ -67,7 +67,7 @@ const CHANNELS = [
  
   { id: "sahehlbokhari", handle: "sahehlbokhari", name: "صحيح البخاري ومسلم", freq: "🪶", color: "#B08CFF" },
   { id: "heeekma1", handle: "heeekma1", name: "آية وحكمة", freq: "🌿", color: "#9CFF6E" },
-  { id: "p2ttp", handle: "P2TTP", name: "آيَاتٍ بَيِّنَاتٍ", freq: "🌳", color: "#6EB4FF" },
+  { id: "p2ttp", handle: "P2TTP", name: "آيَاتٍ بَينَاتٍ", freq: "🌳", color: "#6EB4FF" },
   { id: "athar_sahaba", handle: "athar_sahaba", name: "صحيح آثار الصحابة", freq: "🕊️", color: "#E07856" },
   
   { id: "abdullahbinabbas1", handle: "AbdullahbinAbbas1", name: "فوائد عبدالله بن عباس", freq: "🌾", color: "#C8A97E" },
@@ -132,6 +132,15 @@ function fontSizeForText(text) {
   if (len > 200) return 21;
   if (len > 120) return 24;
   return 28;
+}
+
+function wordCount(text) {
+  return text ? text.trim().split(/\s+/).filter(Boolean).length : 0;
+}
+function passesWordFilter(post) {
+  const text = post.text || post.caption || "";
+  if (!text) return true;
+  return wordCount(text) > 4;
 }
 
 function getFavorites() {
@@ -768,7 +777,7 @@ function Feed(props) {
         let merged = [];
         results.forEach(function (data, i) {
           const src = sources[i];
-          const tagged = tagPosts(data.posts, src);
+          const tagged = tagPosts(data.posts, src).filter(passesWordFilter);
           merged = merged.concat(tagged);
           newestIdRef.current[src.handle] = tagged[0] ? tagged[0].id : null;
           oldestIdRef.current[src.handle] = data.oldestId;
@@ -793,9 +802,9 @@ function Feed(props) {
         results.forEach(function (data, i) {
           const src = sources[i];
           if (data.posts.length) {
-            const tagged = tagPosts(data.posts, src);
+            const tagged = tagPosts(data.posts, src).filter(passesWordFilter);
             fresh = fresh.concat(tagged);
-            newestIdRef.current[src.handle] = tagged[0].id;
+            newestIdRef.current[src.handle] = tagged[0] ? tagged[0].id : data.posts[0].id;
           }
         });
                 if (fresh.length) {
@@ -829,7 +838,7 @@ function Feed(props) {
         results.forEach(function (data, i) {
           const src = sources[i];
           if (data.posts.length) {
-            older = older.concat(tagPosts(data.posts, src));
+            older = older.concat(tagPosts(data.posts, src).filter(passesWordFilter));
             oldestIdRef.current[src.handle] = data.oldestId;
           } else if (!allExhausted) {
             oldestIdRef.current[src.handle] = null;
@@ -1131,7 +1140,7 @@ function App() {
   return h(
     "div",
     { className: "w-full flex flex-col", style: { height: "100dvh", background: "#0B0E11", overflow: "hidden", position: "relative" } },
-        h("button", { onClick: toggleRain, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: rainOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 12px)" } }, "🌧️"),
+        h("button", { onClick: toggleRain, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: rainOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 12px)" } }, "🌧"),
     h("button", { onClick: toggleWaves, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: wavesOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 60px)" } }, "🌊"),
     h("button", { onClick: toggleFire, className: "absolute right-4 z-20 p-2 rounded-full bg-black/35 backdrop-blur-sm text-[16px]", style: { opacity: fireOn ? 1 : 0.6, top: "calc(env(safe-area-inset-top, 0px) + 108px)" } }, "🔥"),
     h(TasbihCounter),
