@@ -39,8 +39,12 @@
 .celebrate-text { animation: celebrateBounce 0.5s ease-out; }
 @keyframes sparkleFloat { 0% { transform: translateY(0) scale(0.7); opacity: 1; } 100% { transform: translateY(-70px) scale(1.3); opacity: 0; } }
 .celebrate-sparkle { animation: sparkleFloat 1.2s ease-out forwards; }
-@keyframes pacmanPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.82); } }
-.pacman-body { animation: pacmanPulse 0.45s ease-in-out infinite; }
+@keyframes pacmanChomp {
+  0%, 100% { clip-path: polygon(50% 50%, 99.73% 55.23%, 92.92% 75.64%, 78.17% 91.31%, 58.19% 99.32%, 36.70% 98.20%, 17.67% 88.14%, 4.63% 71.02%, 0.00% 50.00%, 4.63% 28.98%, 17.67% 11.86%, 36.70% 1.80%, 58.19% 0.68%, 78.17% 8.69%, 92.92% 24.36%, 99.73% 44.77%); }
+  50% { clip-path: polygon(50% 50%, 87.16% 83.46%, 73.69% 94.03%, 57.45% 99.44%, 40.34% 99.06%, 24.36% 92.92%, 11.38% 81.76%, 2.93% 66.87%, 0.00% 50.00%, 2.93% 33.13%, 11.38% 18.24%, 24.36% 7.08%, 40.34% 0.94%, 57.45% 0.56%, 73.69% 5.97%, 87.16% 16.54%); }
+}
+.pacman-body { animation: pacmanChomp 0.35s ease-in-out infinite; }
+
 @keyframes pelletPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.3); opacity: 0; } }
 
 </style>
@@ -544,22 +548,22 @@ function TasbihCounter() {
     const pacAngle = (pacIndex / 33) * 2 * Math.PI - Math.PI / 2;
     const pacX = 50 + 44 * Math.cos(pacAngle);
     const pacY = 50 + 44 * Math.sin(pacAngle);
-    const rotateDeg = (pacAngle * 180 / Math.PI) + 150;
+        const rotateDeg = (pacAngle * 180 / Math.PI) + 90;
     items.push(h(
       "div",
       {
         key: "pacman",
         className: "absolute",
-        style: { left: pacX + "%", top: pacY + "%", transform: "translate(-50%, -50%) rotate(" + rotateDeg + "deg)" }
-      },
-      h("div", {
-        className: "pacman-body",
         style: {
-          width: 22, height: 22, borderRadius: "50%",
-          background: "conic-gradient(#FFD966 0deg 300deg, transparent 300deg 360deg)"
+          left: pacX + "%", top: pacY + "%", width: 22, height: 22,
+          transform: "translate(-50%, -50%) rotate(" + rotateDeg + "deg)",
+          transition: "left 0.3s ease, top 0.3s ease, transform 0.3s ease"
         }
-      })
+      },
+      h("div", { className: "pacman-body", style: { width: "100%", height: "100%", background: "#FFD966" } }),
+      h("div", { style: { position: "absolute", width: 3, height: 3, borderRadius: "50%", background: "#3A2E17", top: "20%", left: "58%" } })
     ));
+
     return items;
   }
 
