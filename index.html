@@ -320,15 +320,16 @@ function RoutineManager(props) {
             "div",
             { className: "flex flex-col items-center gap-1" },
             h("span", { className: "text-[9px] text-white/40", dir: "rtl" }, "📿 ادخل العدد"),
-            h("input", {
+                        h("input", {
               type: "number", value: target, placeholder: "العدد",
               onChange: function (e) { setTarget(e.target.value); },
               className: "w-20 px-3 py-2 rounded-xl text-white text-[13px] text-center",
               style: { background: "rgba(255,255,255,0.06)", border: "none", outline: "none" }
             })
           )
-
+        )
       ),
+
       h(
         "div",
         { className: "flex gap-3 px-5 pt-3 pb-6", style: { borderTop: "1px solid rgba(255,255,255,0.08)" } },
