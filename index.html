@@ -534,30 +534,32 @@ function TasbihCounter() {
       current = count % 33 === 0 && count > 0 ? 33 : count % 33;
     }
     const filled = target > 0 ? Math.round((current / target) * 33) : 0;
+    const outerR = 46, innerR = 6, turns = 2.3;
+    function spiralPoint(i) {
+      const angle = -Math.PI / 2 + (i / 32) * (turns * 2 * Math.PI);
+      const r = outerR - (outerR - innerR) * (i / 32);
+      return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle), angle: angle };
+    }
     const items = [];
     for (let i = 0; i < 33; i++) {
       if (i < filled) continue;
-      const angle = (i / 33) * 2 * Math.PI - Math.PI / 2;
-      const x = 50 + 44 * Math.cos(angle);
-      const y = 50 + 44 * Math.sin(angle);
+      const p = spiralPoint(i);
       items.push(h("span", {
         key: "pellet" + i,
         className: "absolute",
-        style: { fontSize: 13, left: x + "%", top: y + "%", transform: "translate(-50%, -50%)" }
+        style: { fontSize: 13, left: p.x + "%", top: p.y + "%", transform: "translate(-50%, -50%)" }
       }, pellets[i]));
     }
     const pacIndex = filled % 33;
-    const pacAngle = (pacIndex / 33) * 2 * Math.PI - Math.PI / 2;
-    const pacX = 50 + 44 * Math.cos(pacAngle);
-    const pacY = 50 + 44 * Math.sin(pacAngle);
-        const rotateDeg = (pacAngle * 180 / Math.PI) + 90;
+    const pacP = spiralPoint(pacIndex);
+    const rotateDeg = (pacP.angle * 180 / Math.PI) + 90;
     items.push(h(
       "div",
       {
         key: "pacman",
         className: "absolute",
         style: {
-          left: pacX + "%", top: pacY + "%", width: 22, height: 22,
+          left: pacP.x + "%", top: pacP.y + "%", width: 22, height: 22,
           transform: "translate(-50%, -50%) rotate(" + rotateDeg + "deg)",
           transition: "left 0.3s ease, top 0.3s ease, transform 0.3s ease"
         }
@@ -602,10 +604,40 @@ function TasbihCounter() {
         className: "absolute right-4 p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[14px]",
         style: { top: "calc(env(safe-area-inset-top, 0px) + 16px)" }
       }, "🎨"),
-      h(
+      theme === "pacman" ? h(
+        React.Fragment,
+        null,
+        h(
+          "div",
+          { className: "flex flex-col items-center mb-2" },
+          h("div", { className: "font-mono", style: { fontSize: activeItem ? 36 : 44, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
+          h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر")
+        ),
+        h(
+          "div",
+          { className: "relative", style: { width: 240, height: 240 } },
+          renderPacmanRing(),
+          celebrate && !activeItem && h(
+            React.Fragment,
+            null,
+            ["✨", "🌟", "💫", "✨", "🌟"].map(function (emoji, i) {
+              return h("span", {
+                key: i,
+                className: "absolute celebrate-sparkle",
+                style: { fontSize: 20, left: (15 + i * 18) + "%", top: "45%", animationDelay: (i * 0.08) + "s" }
+              }, emoji);
+            }),
+            h("div", {
+              className: "absolute celebrate-text",
+              style: { top: "-40px", left: "50%", transform: "translateX(-50%)", fontSize: 15, color: "#4AF6C3", fontWeight: 600, whiteSpace: "nowrap" },
+              dir: "rtl"
+            }, "ما شاء الله ✨")
+          )
+        )
+      ) : h(
         "div",
         { className: "relative", style: { width: 240, height: 240 } },
-        theme === "pacman" ? renderPacmanRing() : renderBeads(),
+        renderBeads(),
         h(
           "div",
           { className: "absolute inset-0 flex flex-col items-center justify-center" },
