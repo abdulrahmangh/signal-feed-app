@@ -376,9 +376,22 @@ function TasbihCounter() {
     return Array.from({ length: 33 }, function () { return pool[Math.floor(Math.random() * pool.length)]; });
   });
 
+  function randomChaseTarget() {
+    const angle = Math.random() * 2 * Math.PI;
+    const r = 14 + Math.random() * 32;
+    return {
+      x: 50 + r * Math.cos(angle),
+      y: 50 + r * Math.sin(angle),
+      emoji: pellets[Math.floor(Math.random() * pellets.length)]
+    };
+  }
+  const [manPos, setManPos] = useState({ x: 50, y: 50 });
+  const [chaseTarget, setChaseTarget] = useState(function () { return randomChaseTarget(); });
+
   function toggleTheme(e) {
     if (e) e.stopPropagation();
-    const next = theme === "beads" ? "pacman" : "beads";
+    const order = ["beads", "pacman", "chase"];
+    const next = order[(order.indexOf(theme) + 1) % order.length];
     setTheme(next);
     try { localStorage.setItem("tasbihTheme", next); } catch (e) {}
   }
@@ -471,6 +484,11 @@ function TasbihCounter() {
   }
 
   function handleTap() {
+    if (theme === "chase") {
+      const target = chaseTarget;
+      setManPos({ x: target.x, y: target.y });
+      setTimeout(function () { setChaseTarget(randomChaseTarget()); }, 350);
+    }
     if (routine.length > 0 && activeId != null) {
       incrementActiveItem();
     } else {
@@ -480,6 +498,10 @@ function TasbihCounter() {
 
   function handleReset(e) {
     if (e) e.stopPropagation();
+    if (theme === "chase") {
+      setManPos({ x: 50, y: 50 });
+      setChaseTarget(randomChaseTarget());
+    }
     if (routine.length > 0 && activeId != null) {
       const next = routine.map(function (it) { return it.id === activeId ? Object.assign({}, it, { count: 0 }) : it; });
       persistRoutine(next);
@@ -571,6 +593,33 @@ function TasbihCounter() {
     return items;
   }
 
+  function renderChaseArena() {
+    const dx = chaseTarget.x - manPos.x;
+    const dy = chaseTarget.y - manPos.y;
+    const angleDeg = Math.atan2(dy, dx) * 180 / Math.PI;
+    return [
+      h("span", {
+        key: "chase-pellet",
+        className: "absolute",
+        style: { fontSize: 20, left: chaseTarget.x + "%", top: chaseTarget.y + "%", transform: "translate(-50%, -50%)" }
+      }, chaseTarget.emoji),
+      h(
+        "div",
+        {
+          key: "chase-man",
+          className: "absolute",
+          style: {
+            left: manPos.x + "%", top: manPos.y + "%", width: 26, height: 26,
+            transform: "translate(-50%, -50%) rotate(" + angleDeg + "deg)",
+            transition: "left 0.35s ease, top 0.35s ease, transform 0.35s ease"
+          }
+        },
+        h("div", { className: "pacman-body", style: { width: "100%", height: "100%", background: "#FFD966" } }),
+        h("div", { style: { position: "absolute", width: 4, height: 4, borderRadius: "50%", background: "#3A2E17", top: "20%", left: "58%" } })
+      )
+    ];
+  }
+
   const activeItem = routine.length > 0 ? routine.find(function (it) { return it.id === activeId; }) : null;
 
   return h(
@@ -599,15 +648,14 @@ function TasbihCounter() {
         className: "absolute left-4 p-2 rounded-full bg-black/35 backdrop-blur-sm text-white text-[14px]",
         style: { top: "calc(env(safe-area-inset-top, 0px) + 16px)" }
       }, "اضافة ذكر➕"),
-            h("button", {
+      h("button", {
         onClick: toggleTheme,
         className: "absolute right-4 p-2 rounded-full bg-black/35 backdrop-blur-sm flex items-center justify-center",
         style: { top: "calc(env(safe-area-inset-top, 0px) + 16px)", width: 32, height: 32 }
       },
         h("div", { className: "pacman-body", style: { width: 16, height: 16, background: "#FFD966" } })
       ),
-
-      theme === "pacman" ? h(
+      theme !== "beads" ? h(
         React.Fragment,
         null,
         h(
@@ -619,7 +667,7 @@ function TasbihCounter() {
         h(
           "div",
           { className: "relative", style: { width: 240, height: 240 } },
-          renderPacmanRing(),
+          theme === "chase" ? renderChaseArena() : renderPacmanRing(),
           celebrate && !activeItem && h(
             React.Fragment,
             null,
