@@ -271,11 +271,27 @@ function IconRain(props) {
   );
 }
 
+const PRESET_DHIKR = [
+  { name: "لا اله الا الله وحده لا شريك له له الملك", target: 100 },
+  { name: "استغفر الله واتوب اليه", target: 100 },
+  { name: "لا حول ولا قوة الا بالله", target: 100 },
+  { name: "سبحان الله وبحمده", target: 100 }
+];
+
 function RoutineManager(props) {
   const routine = props.routine, onChange = props.onChange, onClose = props.onClose;
   const [items, setItems] = useState(routine);
   const [name, setName] = useState("");
   const [target, setTarget] = useState("33");
+
+  function togglePreset(preset) {
+    const exists = items.some(function (it) { return it.name === preset.name; });
+    const next = exists
+      ? items.filter(function (it) { return it.name !== preset.name; })
+      : items.concat([{ id: Date.now() + Math.random(), name: preset.name, target: preset.target, count: 0 }]);
+    setItems(next);
+    onChange(next);
+  }
 
   function handleSave() {
     const n = name.trim();
@@ -304,6 +320,21 @@ function RoutineManager(props) {
         "div",
         { className: "px-5 pt-5 pb-3 flex-1 overflow-y-auto" },
         h("h2", { className: "text-lg font-semibold text-white mb-4 text-right", dir: "rtl" }, "قائمة الأذكار"),
+        h("p", { className: "text-[11px] text-white/40 mb-2", dir: "rtl" }, "أذكار مقترحة"),
+        PRESET_DHIKR.map(function (preset) {
+          const checked = items.some(function (it) { return it.name === preset.name; });
+          return h("button", {
+            key: preset.name,
+            onClick: function () { togglePreset(preset); },
+            className: "w-full flex items-center justify-between gap-3 px-3 py-3 rounded-2xl mb-2",
+            style: { background: checked ? "rgba(74,246,195,0.15)" : "rgba(255,255,255,0.04)" }
+          },
+            h("span", { className: "text-[13px] text-white", dir: "rtl" }, preset.name + " " + preset.target + " مرة"),
+            h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0", style: { background: checked ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
+              checked && h("span", { style: { color: "#000", fontSize: "12px" } }, "✓"))
+          );
+        }),
+        h("p", { className: "text-[11px] text-white/40 mb-2 mt-4", dir: "rtl" }, "أذكارك"),
         items.length === 0 && h("p", { className: "text-[13px] text-white/40 text-center mb-4", dir: "rtl" }, "لم تُضِف أي ذكر بعد"),
         items.map(function (it) {
           const done = it.count >= it.target;
