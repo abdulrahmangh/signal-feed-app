@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+totals<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -456,12 +456,14 @@ function TasbihCounter() {
     return total / (times.length - 1);
   }
 
-  function formatEta(ms) {
+    function formatEta(ms) {
     const totalSeconds = Math.round(ms / 1000);
     if (totalSeconds < 60) return "‏~" + totalSeconds + " ثانية متبقية";
-    const minutes = Math.round(totalSeconds / 60);
-    return "‏~" + minutes + " دقيقة متبقية";
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return "‏~" + minutes + " دقيقة و" + seconds + " ثانية متبقية";
   }
+
 
   function playChime100() {
     try {
