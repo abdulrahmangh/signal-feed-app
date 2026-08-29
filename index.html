@@ -443,6 +443,26 @@ function TasbihCounter() {
     }
   }, [routine]);
 
+  const tapTimesRef = useRef([]);
+  useEffect(function () {
+    tapTimesRef.current = [];
+  }, [activeId]);
+
+  function getAvgIntervalMs() {
+    const times = tapTimesRef.current;
+    if (times.length < 2) return null;
+    let total = 0;
+    for (let i = 1; i < times.length; i++) total += times[i] - times[i - 1];
+    return total / (times.length - 1);
+  }
+
+  function formatEta(ms) {
+    const totalSeconds = Math.round(ms / 1000);
+    if (totalSeconds < 60) return "‏~" + totalSeconds + " ثانية متبقية";
+    const minutes = Math.round(totalSeconds / 60);
+    return "‏~" + minutes + " دقيقة متبقية";
+  }
+
   function playChime100() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -499,6 +519,8 @@ function TasbihCounter() {
 
   function incrementActiveItem() {
     if (navigator.vibrate) navigator.vibrate(10);
+    tapTimesRef.current.push(Date.now());
+    if (tapTimesRef.current.length > 6) tapTimesRef.current.shift();
     const next = routine.map(function (it) {
       if (it.id !== activeId) return it;
       const newCount = it.count + 1;
@@ -654,6 +676,10 @@ function TasbihCounter() {
   }
 
   const activeItem = routine.length > 0 ? routine.find(function (it) { return it.id === activeId; }) : null;
+  const avgIntervalMs = getAvgIntervalMs();
+  const etaText = (activeItem && avgIntervalMs && activeItem.target - activeItem.count > 0)
+    ? formatEta(avgIntervalMs * (activeItem.target - activeItem.count))
+    : null;
 
   return h(
     React.Fragment,
@@ -695,7 +721,8 @@ function TasbihCounter() {
           "div",
           { className: "flex flex-col items-center mb-2" },
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 36 : 44, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
-          h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر")
+          h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
+          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText)
         ),
         h(
           "div",
@@ -726,7 +753,8 @@ function TasbihCounter() {
           "div",
           { className: "absolute inset-0 flex flex-col items-center justify-center" },
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 40 : 56, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
-          h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر")
+          h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
+          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText)
         ),
         celebrate && !activeItem && h(
           React.Fragment,
