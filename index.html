@@ -1,4 +1,4 @@
-totals<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -280,6 +280,36 @@ const PRESET_DHIKR = [
   { name: " اللهم صل على محمد ", target: 100 }
 ];
 
+function getTodayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+function getYesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().slice(0, 10);
+}
+function loadStreaks() {
+  try { return JSON.parse(localStorage.getItem("tasbihStreaks") || "{}"); } catch (e) { return {}; }
+}
+function saveStreaks(obj) {
+  try { localStorage.setItem("tasbihStreaks", JSON.stringify(obj)); } catch (e) {}
+}
+function creditStreak(name) {
+  const streaks = loadStreaks();
+  const today = getTodayStr();
+  const rec = streaks[name];
+  if (rec && rec.lastDate === today) return;
+  const newStreak = (rec && rec.lastDate === getYesterdayStr()) ? rec.streak + 1 : 1;
+  streaks[name] = { lastDate: today, streak: newStreak };
+  saveStreaks(streaks);
+}
+function getDisplayStreak(name) {
+  const rec = loadStreaks()[name];
+  if (!rec) return 0;
+  const today = getTodayStr(), yesterday = getYesterdayStr();
+  return (rec.lastDate === today || rec.lastDate === yesterday) ? rec.streak : 0;
+}
+
 function RoutineManager(props) {
   const routine = props.routine, onChange = props.onChange, onClose = props.onClose;
   const [items, setItems] = useState(routine);
@@ -325,13 +355,17 @@ function RoutineManager(props) {
         h("p", { className: "text-[11px] text-white/40 mb-2", dir: "rtl" }, "أذكار مقترحة"),
         PRESET_DHIKR.map(function (preset) {
           const checked = items.some(function (it) { return it.name === preset.name; });
+          const streak = getDisplayStreak(preset.name);
           return h("button", {
             key: preset.name,
             onClick: function () { togglePreset(preset); },
             className: "w-full flex items-center justify-between gap-3 px-3 py-3 rounded-2xl mb-2",
             style: { background: checked ? "rgba(74,246,195,0.15)" : "rgba(255,255,255,0.04)" }
           },
-            h("span", { className: "text-[13px] text-white", dir: "rtl" }, preset.name + " " + preset.target + " مرة"),
+            h("div", { dir: "rtl" },
+              h("span", { className: "text-[13px] text-white" }, preset.name + " " + preset.target + " مرة"),
+              streak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" } }, "🔥 " + streak + " يوم متتالي")
+            ),
             h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0", style: { background: checked ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
               checked && h("span", { style: { color: "#000", fontSize: "12px" } }, "✓"))
           );
@@ -435,6 +469,20 @@ function TasbihCounter() {
   }
 
   useEffect(function () {
+    const today = getTodayStr();
+    let lastDay = null;
+    try { lastDay = localStorage.getItem("tasbihLastDay"); } catch (e) {}
+    if (lastDay !== today) {
+      const presetNames = PRESET_DHIKR.map(function (p) { return p.name; });
+      const resetRoutine = routine.map(function (it) {
+        return presetNames.indexOf(it.name) !== -1 ? Object.assign({}, it, { count: 0 }) : it;
+      });
+      persistRoutine(resetRoutine);
+      try { localStorage.setItem("tasbihLastDay", today); } catch (e) {}
+    }
+  }, []);
+
+  useEffect(function () {
     if (routine.length === 0) { setActiveId(null); return; }
     const current = routine.find(function (it) { return it.id === activeId; });
     if (!current) {
@@ -456,14 +504,13 @@ function TasbihCounter() {
     return total / (times.length - 1);
   }
 
-    function formatEta(ms) {
+  function formatEta(ms) {
     const totalSeconds = Math.round(ms / 1000);
     if (totalSeconds < 60) return "‏~" + totalSeconds + " ثانية متبقية";
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return "‏~" + minutes + " دقيقة و" + seconds + " ثانية متبقية";
   }
-
 
   function playChime100() {
     try {
@@ -529,6 +576,7 @@ function TasbihCounter() {
       if (newCount === it.target) {
         playChime33();
         if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+        if (PRESET_DHIKR.some(function (p) { return p.name === it.name; })) creditStreak(it.name);
       }
       return Object.assign({}, it, { count: newCount });
     });
@@ -682,6 +730,9 @@ function TasbihCounter() {
   const etaText = (activeItem && avgIntervalMs && activeItem.target - activeItem.count > 0)
     ? formatEta(avgIntervalMs * (activeItem.target - activeItem.count))
     : null;
+  const activeStreak = (activeItem && PRESET_DHIKR.some(function (p) { return p.name === activeItem.name; }))
+    ? getDisplayStreak(activeItem.name)
+    : 0;
 
   return h(
     React.Fragment,
@@ -724,7 +775,8 @@ function TasbihCounter() {
           { className: "flex flex-col items-center mb-2" },
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 36 : 44, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
           h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
-          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText)
+          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
+          activeStreak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, "🔥 " + activeStreak + " يوم متتالي")
         ),
         h(
           "div",
@@ -756,7 +808,8 @@ function TasbihCounter() {
           { className: "absolute inset-0 flex flex-col items-center justify-center" },
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 40 : 56, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
           h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
-          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText)
+          etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
+          activeStreak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, "🔥 " + activeStreak + " يوم متتالي")
         ),
         celebrate && !activeItem && h(
           React.Fragment,
