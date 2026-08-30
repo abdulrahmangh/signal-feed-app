@@ -289,7 +289,21 @@ function getYesterdayStr() {
   return d.toISOString().slice(0, 10);
 }
 function loadStreaks() {
-  try { return JSON.parse(localStorage.getItem("tasbihStreaks") || "{}"); } catch (e) { return {}; }
+  let streaks;
+  try { streaks = JSON.parse(localStorage.getItem("tasbihStreaks") || "{}"); } catch (e) { streaks = {}; }
+  let migrated = false;
+  Object.keys(streaks).forEach(function (name) {
+    const rec = streaks[name];
+    if (rec && rec.streak != null && !rec.day && !rec.night) {
+      streaks[name] = {
+        day: { lastDate: rec.lastDate, streak: rec.streak },
+        night: { lastDate: rec.lastDate, streak: rec.streak }
+      };
+      migrated = true;
+    }
+  });
+  if (migrated) saveStreaks(streaks);
+  return streaks;
 }
 function saveStreaks(obj) {
   try { localStorage.setItem("tasbihStreaks", JSON.stringify(obj)); } catch (e) {}
@@ -297,17 +311,35 @@ function saveStreaks(obj) {
 function creditStreak(name) {
   const streaks = loadStreaks();
   const today = getTodayStr();
-  const rec = streaks[name];
-  if (rec && rec.lastDate === today) return;
-  const newStreak = (rec && rec.lastDate === getYesterdayStr()) ? rec.streak + 1 : 1;
-  streaks[name] = { lastDate: today, streak: newStreak };
+  const hour = new Date().getHours();
+  const period = (hour >= 3 && hour < 15) ? "day" : "night";
+  const rec = streaks[name] || {};
+  const periodRec = rec[period];
+  if (!(periodRec && periodRec.lastDate === today)) {
+    const newStreak = (periodRec && periodRec.lastDate === getYesterdayStr()) ? periodRec.streak + 1 : 1;
+    rec[period] = { lastDate: today, streak: newStreak };
+  }
+  streaks[name] = rec;
   saveStreaks(streaks);
 }
-function getDisplayStreak(name) {
+function getStreakInfo(name) {
   const rec = loadStreaks()[name];
-  if (!rec) return 0;
   const today = getTodayStr(), yesterday = getYesterdayStr();
-  return (rec.lastDate === today || rec.lastDate === yesterday) ? rec.streak : 0;
+  function aliveCount(periodRec) {
+    if (!periodRec) return 0;
+    return (periodRec.lastDate === today || periodRec.lastDate === yesterday) ? periodRec.streak : 0;
+  }
+  return {
+    day: rec ? aliveCount(rec.day) : 0,
+    night: rec ? aliveCount(rec.night) : 0
+  };
+}
+function buildStreakLabels(name) {
+  const info = getStreakInfo(name);
+  const labels = [];
+  if (info.day > 0) labels.push("☀️ " + info.day + " يوم متتالي");
+  if (info.night > 0) labels.push("🌙 " + info.night + " يوم متتالي");
+  return labels;
 }
 
 function RoutineManager(props) {
@@ -355,7 +387,7 @@ function RoutineManager(props) {
         h("p", { className: "text-[11px] text-white/40 mb-2", dir: "rtl" }, "أذكار مقترحة"),
         PRESET_DHIKR.map(function (preset) {
           const checked = items.some(function (it) { return it.name === preset.name; });
-          const streak = getDisplayStreak(preset.name);
+          const streakLabels = buildStreakLabels(preset.name);
           return h("button", {
             key: preset.name,
             onClick: function () { togglePreset(preset); },
@@ -364,7 +396,9 @@ function RoutineManager(props) {
           },
             h("div", { dir: "rtl" },
               h("span", { className: "text-[13px] text-white" }, preset.name + " " + preset.target + " مرة"),
-              streak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" } }, "🔥 " + streak + " يوم متتالي")
+              streakLabels.map(function (label, i) {
+                return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" } }, label);
+              })
             ),
             h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0", style: { background: checked ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
               checked && h("span", { style: { color: "#000", fontSize: "12px" } }, "✓"))
@@ -730,9 +764,9 @@ function TasbihCounter() {
   const etaText = (activeItem && avgIntervalMs && activeItem.target - activeItem.count > 0)
     ? formatEta(avgIntervalMs * (activeItem.target - activeItem.count))
     : null;
-  const activeStreak = (activeItem && PRESET_DHIKR.some(function (p) { return p.name === activeItem.name; }))
-    ? getDisplayStreak(activeItem.name)
-    : 0;
+  const activeStreakLabels = (activeItem && PRESET_DHIKR.some(function (p) { return p.name === activeItem.name; }))
+    ? buildStreakLabels(activeItem.name)
+    : [];
 
   return h(
     React.Fragment,
@@ -776,7 +810,9 @@ function TasbihCounter() {
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 36 : 44, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
           h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
           etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
-          activeStreak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, "🔥 " + activeStreak + " يوم متتالي")
+          activeStreakLabels.map(function (label, i) {
+            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, label);
+          })
         ),
         h(
           "div",
@@ -809,7 +845,9 @@ function TasbihCounter() {
           h("div", { className: "font-mono", style: { fontSize: activeItem ? 40 : 56, color: "#4AF6C3" } }, activeItem ? (activeItem.count + " / " + activeItem.target) : count),
           h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
           etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
-          activeStreak > 0 && h("div", { className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, "🔥 " + activeStreak + " يوم متتالي")
+          activeStreakLabels.map(function (label, i) {
+            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, label);
+          })
         ),
         celebrate && !activeItem && h(
           React.Fragment,
