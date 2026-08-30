@@ -337,8 +337,8 @@ function getStreakInfo(name) {
 function buildStreakLabels(name) {
   const info = getStreakInfo(name);
   const labels = [];
-  if (info.day > 0) labels.push("☀️ " + info.day + " يوم متتالي");
-  if (info.night > 0) labels.push("🌙 " + info.night + " ليلة متتالية");
+  if (info.day > 0) labels.push({ text: "☀️ " + info.day + " يوم متتالي", color: "#FFB35A" });
+  if (info.night > 0) labels.push({ text: "🌙 " + info.night + " ليلة متتالية", color: "#8AB4FF" });
   return labels;
 }
 
@@ -397,7 +397,7 @@ function RoutineManager(props) {
             h("div", { dir: "rtl" },
               h("span", { className: "text-[13px] text-white" }, preset.name + " " + preset.target + " مرة"),
               streakLabels.map(function (label, i) {
-                return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" } }, label);
+                return h("div", { key: i, className: "text-[11px] mt-1", style: { color: label.color } }, label.text);
               })
             ),
             h("div", { className: "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0", style: { background: checked ? "#4AF6C3" : "rgba(255,255,255,0.15)" } },
@@ -811,7 +811,7 @@ function TasbihCounter() {
           h("div", { className: "text-white text-[13px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
           etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
           activeStreakLabels.map(function (label, i) {
-            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, label);
+            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: label.color }, dir: "rtl" }, label.text);
           })
         ),
         h(
@@ -846,7 +846,7 @@ function TasbihCounter() {
           h("div", { className: "text-white text-[14px] mt-1", dir: "rtl" }, activeItem ? activeItem.name : "عداد الذكر"),
           etaText && h("div", { className: "text-[11px] text-white/40 mt-1", dir: "rtl" }, etaText),
           activeStreakLabels.map(function (label, i) {
-            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: "#FFB35A" }, dir: "rtl" }, label);
+            return h("div", { key: i, className: "text-[11px] mt-1", style: { color: label.color }, dir: "rtl" }, label.text);
           })
         ),
         celebrate && !activeItem && h(
