@@ -337,8 +337,8 @@ function getStreakInfo(name) {
 function buildStreakLabels(name) {
   const info = getStreakInfo(name);
   const labels = [];
-  if (info.day > 0) labels.push({ text: "☀️ " + info.day + " يوم متتالي", color: "#FFB35A" });
-  if (info.night > 0) labels.push({ text: "🌙 " + info.night + " ليلة متتالية", color: "#8AB4FF" });
+  if (info.day > 0) labels.push({ text: "🌅 " + info.day + " يوم متتالي", color: "#FFB35A" });
+  if (info.night > 0) labels.push({ text: "🌌 " + info.night + " ليلة متتالية", color: "#8AB4FF" });
   return labels;
 }
 
