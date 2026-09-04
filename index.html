@@ -74,7 +74,7 @@ const POLL_INTERVAL_MS = 30000;
 const CHANNELS = [
   { id: "mix", handle: null, name: "تصفّح مفضلتك ", freq: "💡", color: "#FF6EC7", mix: true },
   { id: "muslim_tok_s", handle: "muslim_tok_s", name: "اذكار اليوم والليلة", freq: "🌅", color: "#FFD966", ordered: true },
- 
+  { id: "iilllii7", handle: "iilllii7", name: "فوائد ابن القيم", freq: "📜", color: "#FFB86B" },
  { id: "athar_ayah1", handle: "Athar_Ayah1", name: "أثر آية", freq: "🪶", color: "#8CC7A1" },
 
   { id: "sahehlbokhari", handle: "sahehlbokhari", name: "صحيح البخاري ومسلم", freq: "🪶", color: "#B08CFF" },
@@ -91,7 +91,7 @@ const CHANNELS = [
 
 ];
 
-const FAVORITES_CHANNEL = { id: "favorites", handle: null, name: "المحفوظ", freq: "⭐", color: "#FFD966", favorites: true };
+const FAVORITES_CHANNEL = { id: "favorites", handle: null, name: "المفضلة", freq: "⭐", color: "#FFD966", favorites: true };
 
 function shuffleArray(arr) {
   const a = arr.slice();
@@ -337,8 +337,8 @@ function getStreakInfo(name) {
 function buildStreakLabels(name) {
   const info = getStreakInfo(name);
   const labels = [];
-  if (info.day > 0) labels.push({ text: "🌅 " + info.day + " يوم متتالي", color: "#FFB35A" });
-  if (info.night > 0) labels.push({ text: "🌌 " + info.night + " ليلة متتالية", color: "#8AB4FF" });
+  if (info.day > 0) labels.push({ text: "☀️ " + info.day + " يوم متتالي", color: "#FFB35A" });
+  if (info.night > 0) labels.push({ text: "🌙 " + info.night + " ليلة متتالية", color: "#8AB4FF" });
   return labels;
 }
 
@@ -622,6 +622,43 @@ function TasbihCounter() {
     }
   }
 
+  function addAmount(amount) {
+    if (navigator.vibrate) navigator.vibrate(10);
+    if (routine.length > 0 && activeId != null) {
+      const next = routine.map(function (it) {
+        if (it.id !== activeId) return it;
+        const newCount = Math.min(it.count + amount, it.target);
+        if (it.count < it.target && newCount >= it.target) {
+          playChime33();
+          if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+          if (PRESET_DHIKR.some(function (p) { return p.name === it.name; })) creditStreak(it.name);
+        }
+        return Object.assign({}, it, { count: newCount });
+      });
+      persistRoutine(next);
+      const justUpdated = next.find(function (it) { return it.id === activeId; });
+      if (justUpdated && justUpdated.count >= justUpdated.target) {
+        const nextIncomplete = next.find(function (it) { return it.count < it.target; });
+        if (nextIncomplete) setActiveId(nextIncomplete.id);
+      }
+    } else {
+      setCount(function (prev) {
+        const next = prev + amount;
+        try { localStorage.setItem("tasbihCount", JSON.stringify(next)); } catch (e) {}
+        const crossed100 = Math.floor(next / 100) > Math.floor(prev / 100);
+        const crossed33 = Math.floor(next / 33) > Math.floor(prev / 33);
+        if (crossed100) {
+          playChime100();
+          setCelebrate(true);
+          setTimeout(function () { setCelebrate(false); }, 1300);
+        } else if (crossed33) {
+          playChime33();
+        }
+        return next;
+      });
+    }
+  }
+
   function handleTap() {
     if (theme === "chase") {
       const target = chaseTarget;
@@ -889,6 +926,7 @@ function TasbihCounter() {
       h(
         "div",
         { className: "absolute flex items-center gap-3", style: { bottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" } },
+        h("button", { onClick: function (e) { e.stopPropagation(); addAmount(10); }, className: "px-4 py-3 rounded-full text-white text-[13px] font-semibold", style: { background: "rgba(74,246,195,0.2)" } }, "+10"),
         (activeItem ? activeItem.count > 0 : count > 0) && h("button", { onClick: handleReset, className: "px-5 py-3 rounded-full text-white/70 text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "↺ تصفير"),
         h("button", { onClick: function (e) { e.stopPropagation(); setLocked(false); }, className: "px-5 py-3 rounded-full text-white text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "↪️ رجوع")
       )
