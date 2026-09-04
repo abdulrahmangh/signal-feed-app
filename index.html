@@ -475,6 +475,11 @@ function TasbihCounter() {
   const [showManager, setShowManager] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [celebrateRoutine, setCelebrateRoutine] = useState(false);
+  const [burst33, setBurst33] = useState(false);
+  function triggerBurst33() {
+    setBurst33(true);
+    setTimeout(function () { setBurst33(false); }, 700);
+  }
   const [theme, setTheme] = useState(function () {
     try { return localStorage.getItem("tasbihTheme") || "beads"; } catch (e) { return "beads"; }
   });
@@ -608,6 +613,7 @@ function TasbihCounter() {
         setTimeout(function () { setCelebrate(false); }, 1300);
       } else if (next % 33 === 0) {
         playChime33();
+        triggerBurst33();
       }
       return next;
     });
@@ -628,6 +634,7 @@ function TasbihCounter() {
         setTimeout(function () { setCelebrateRoutine(false); }, 1600);
       } else if (newCount % 33 === 0) {
         playChime33();
+        triggerBurst33();
       }
       return Object.assign({}, it, { count: newCount });
     });
@@ -656,6 +663,7 @@ function TasbihCounter() {
           setTimeout(function () { setCelebrateRoutine(false); }, 1600);
         } else if (crossed33) {
           playChime33();
+          triggerBurst33();
         }
         return Object.assign({}, it, { count: newCount });
       });
@@ -677,6 +685,7 @@ function TasbihCounter() {
           setTimeout(function () { setCelebrate(false); }, 1300);
         } else if (crossed33) {
           playChime33();
+          triggerBurst33();
         }
         return next;
       });
@@ -850,6 +859,26 @@ function TasbihCounter() {
     return elements;
   }
 
+  function renderMiniBurst() {
+    const colors = ["#FFD966", "#4AF6C3", "#8AB4FF"];
+    const items = [];
+    for (let p = 0; p < 3; p++) {
+      const angle = (p / 3) * 2 * Math.PI - Math.PI / 2;
+      const dist = 30;
+      const dx = Math.cos(angle) * dist;
+      const dy = Math.sin(angle) * dist;
+      items.push(h("span", {
+        key: p,
+        className: "firework-particle",
+        style: {
+          left: "50%", top: "50%", width: 6, height: 6, background: colors[p % colors.length],
+          "--dx": dx + "px", "--dy": dy + "px"
+        }
+      }));
+    }
+    return items;
+  }
+
   const activeItem = routine.length > 0 ? routine.find(function (it) { return it.id === activeId; }) : null;
   const avgIntervalMs = getAvgIntervalMs();
   const etaText = (activeItem && avgIntervalMs && activeItem.target - activeItem.count > 0)
@@ -984,7 +1013,8 @@ function TasbihCounter() {
         (activeItem ? activeItem.count > 0 : count > 0) && h("button", { onClick: handleReset, className: "px-5 py-3 rounded-full text-white/70 text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "↺ تصفير"),
         h("button", { onClick: function (e) { e.stopPropagation(); setLocked(false); }, className: "px-5 py-3 rounded-full text-white text-[13px]", style: { background: "rgba(255,255,255,0.1)" } }, "↪️ رجوع")
       ),
-      celebrateRoutine && h(React.Fragment, null, renderFireworks())
+      celebrateRoutine && h(React.Fragment, null, renderFireworks()),
+      burst33 && h(React.Fragment, null, renderMiniBurst())
     ),
     showManager && h(RoutineManager, {
       routine: routine,
