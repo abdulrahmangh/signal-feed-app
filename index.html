@@ -66,7 +66,7 @@ window.onerror = function (msg, url, line, col) {
 </script>
 <script>
 const h = React.createElement;
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 const API_BASE = "https://signal-feed-backend.vercel.app";
 const POLL_INTERVAL_MS = 30000;
@@ -472,10 +472,17 @@ function TasbihCounter() {
   const [theme, setTheme] = useState(function () {
     try { return localStorage.getItem("tasbihTheme") || "beads"; } catch (e) { return "beads"; }
   });
-  const [pellets] = useState(function () {
+  const spiralTarget = (function () {
+    if (routine.length > 0 && activeId != null) {
+      const active = routine.find(function (it) { return it.id === activeId; });
+      if (active) return active.target;
+    }
+    return 33;
+  })();
+  const pellets = useMemo(function () {
     const pool = ["🌳", "🌱", "🍃", "✨", "🌿", "🌾"];
-    return Array.from({ length: 33 }, function () { return pool[Math.floor(Math.random() * pool.length)]; });
-  });
+    return Array.from({ length: spiralTarget }, function () { return pool[Math.floor(Math.random() * pool.length)]; });
+  }, [spiralTarget]);
 
   function randomChaseTarget() {
     const angle = Math.random() * 2 * Math.PI;
@@ -731,33 +738,36 @@ function TasbihCounter() {
     } else {
       current = count % 33 === 0 && count > 0 ? 33 : count % 33;
     }
-    const filled = target > 0 ? Math.round((current / target) * 33) : 0;
+    const filled = current;
     const outerR = 46, innerR = 6, turns = 2.3;
+    const denom = Math.max(target - 1, 1);
     function spiralPoint(i) {
-      const angle = -Math.PI / 2 + (i / 32) * (turns * 2 * Math.PI);
-      const r = outerR - (outerR - innerR) * (i / 32);
+      const angle = -Math.PI / 2 + (i / denom) * (turns * 2 * Math.PI);
+      const r = outerR - (outerR - innerR) * (i / denom);
       return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle), angle: angle };
     }
+    const pelletSize = target > 70 ? 7 : target > 45 ? 9 : target > 25 ? 11 : 13;
     const items = [];
-    for (let i = 0; i < 33; i++) {
+    for (let i = 0; i < target; i++) {
       if (i < filled) continue;
       const p = spiralPoint(i);
       items.push(h("span", {
         key: "pellet" + i,
         className: "absolute",
-        style: { fontSize: 13, left: p.x + "%", top: p.y + "%", transform: "translate(-50%, -50%)" }
-      }, pellets[i]));
+        style: { fontSize: pelletSize, left: p.x + "%", top: p.y + "%", transform: "translate(-50%, -50%)" }
+      }, pellets[i % pellets.length]));
     }
-    const pacIndex = filled % 33;
+    const pacIndex = filled % target;
     const pacP = spiralPoint(pacIndex);
     const rotateDeg = (pacP.angle * 180 / Math.PI) + 90;
+    const pacSize = target > 70 ? 16 : 22;
     items.push(h(
       "div",
       {
         key: "pacman",
         className: "absolute",
         style: {
-          left: pacP.x + "%", top: pacP.y + "%", width: 22, height: 22,
+          left: pacP.x + "%", top: pacP.y + "%", width: pacSize, height: pacSize,
           transform: "translate(-50%, -50%) rotate(" + rotateDeg + "deg)",
           transition: "left 0.3s ease, top 0.3s ease, transform 0.3s ease"
         }
