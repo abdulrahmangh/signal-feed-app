@@ -79,8 +79,7 @@ const POLL_INTERVAL_MS = 30000;
 const CHANNELS = [
   { id: "mix", handle: null, name: "تصفّح مفضلتك ", freq: "💡", color: "#FF6EC7", mix: true },
   { id: "muslim_tok_s", handle: "muslim_tok_s", name: "اذكار اليوم والليلة", freq: "🌅", color: "#FFD966", ordered: true },
-  { id: "nedaat_alquran", handle: "Nedaat_Alquran", name: "نداءات الرحمن", freq: "🌧️", color: "#D9A5E0" },
-
+  { id: "iilllii7", handle: "iilllii7", name: "فوائد ابن القيم", freq: "📜", color: "#FFB86B" },
  { id: "athar_ayah1", handle: "Athar_Ayah1", name: "أثر آية", freq: "🪶", color: "#8CC7A1" },
 
   { id: "sahehlbokhari", handle: "sahehlbokhari", name: "صحيح البخاري ومسلم", freq: "🪶", color: "#B08CFF" },
@@ -97,7 +96,8 @@ const CHANNELS = [
 
 ];
 
-const FAVORITES_CHANNEL = { id: "favorites", handle: null, name: "المحفوظ", freq: "📌", color: "#FFD966", favorites: true };
+const FAVORITES_CHANNEL = { id: "favorites", handle: null, name: "المفضلة", freq: "⭐", color: "#FFD966", favorites: true };
+
 function shuffleArray(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -1425,7 +1425,7 @@ function Feed(props) {
 
 function ChannelList(props) {
   const onSelect = props.onSelect;
-  const videoUrl = "/home-bg.mp4";
+  const YOUTUBE_VIDEO_ID = "Rs7St51oDDc";
     const [shuffledChannels] = useState(function () {
     const first = CHANNELS[0];
     const second = CHANNELS.filter(function (c) { return c.id === "muslim_tok_s"; })[0];
@@ -1433,7 +1433,6 @@ function ChannelList(props) {
     return [first, second, FAVORITES_CHANNEL].concat(rest);
   });
 
-    const videoRef = useRef(null);
   const [showPicker, setShowPicker] = useState(false);
     const [customIds, setCustomIds] = useState(function () {
     try {
@@ -1474,23 +1473,28 @@ function ChannelList(props) {
   }
 
 
-    useEffect(function () {
-    const v = videoRef.current;
-    if (!v || !videoUrl) return;
-    v.muted = true;
-    v.playbackRate = 0.5;
-    v.play().catch(function () {});
-  }, [videoUrl]);
-
-
 
   return h(
     "div",
     { className: "relative flex flex-col h-full overflow-hidden", style: { background: "#0B0E11" } },
-    videoUrl && h("video", {
-      ref: videoRef, src: videoUrl, autoPlay: true, muted: true, loop: true, playsInline: true,
-      className: "absolute inset-0 w-full h-full object-cover",
-    }),
+    h(
+      "div",
+      { className: "absolute inset-0 overflow-hidden", style: { pointerEvents: "none" } },
+      h("iframe", {
+        src: "https://www.youtube.com/embed/" + YOUTUBE_VIDEO_ID + "?autoplay=1&mute=1&controls=0&modestbranding=1&playsinline=1&rel=0&iv_load_policy=3",
+        title: "background",
+        allow: "autoplay; encrypted-media",
+        frameBorder: "0",
+        style: {
+          position: "absolute", top: "50%", left: "50%",
+          width: "100vw", height: "56.25vw",
+          minHeight: "100vh", minWidth: "177.78vh",
+          transform: "translate(-50%, -50%)",
+          border: "none",
+          filter: "sepia(0.25) saturate(1.3) brightness(1.05) hue-rotate(-8deg)"
+        }
+      })
+    ),
 
     h("div", { className: "absolute inset-0", style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.75) 100%)" } }),
 
