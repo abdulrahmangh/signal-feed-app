@@ -46,6 +46,8 @@
 .pacman-body { animation: pacmanChomp 0.35s ease-in-out infinite; }
 
 @keyframes pelletPop { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.3); opacity: 0; } }
+@keyframes videoStartupCover { 0% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
+.video-startup-cover { animation: videoStartupCover 1.8s ease-out forwards; }
 @keyframes fireworkParticle {
   0% { transform: translate(0, 0) scale(1); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
@@ -1495,6 +1497,7 @@ function ChannelList(props) {
         }
       })
     ),
+    h("div", { className: "absolute inset-0 video-startup-cover", style: { background: "#0B0E11", pointerEvents: "none" } }),
 
     h("div", { className: "absolute inset-0", style: { background: "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0.75) 100%)" } }),
 
